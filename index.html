@@ -24,10 +24,10 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; padding: 50px 0px;
+            overflow: hidden;
         }
 
-        /* --- NEON NAVIGATION --- */
+        /* --- NAVIGATION --- */
         nav {
             background: var(--glass);
             backdrop-filter: blur(15px);
@@ -82,7 +82,13 @@
             max-width: 500px;
         }
 
-        .hero h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(to right, #00ff88, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero h1 { 
+            font-size: 2.5rem; 
+            margin-bottom: 10px; 
+            background: linear-gradient(to right, #00ff88, #00d4ff); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
 
         /* --- EXAM CARDS --- */
         .q-card {
@@ -132,6 +138,172 @@
             gap: 10px;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
+
+        .main-input {
+            flex-grow: 1;
+            background: #1e2533;
+            border: 1px solid #2d3436;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+
+        .action-btn {
+            background: var(--prim);
+            color: #000;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- RESPONSIVENESS --- */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8rem; }
+            .screen { padding: 15px; }
+            nav button { padding: 8px 12px; font-size: 0.75rem; }
+        }
+
+        /* TV Optimization */
+        @media (min-width: 1500px) {
+            .screen { padding: 40px 20%; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <button onclick="window.showScreen('home')" id="btn-home" class="active">DASHBOARD</button>
+    <button onclick="window.showScreen('exam')" id="btn-exam">MOCK EXAM</button>
+    <button onclick="window.showScreen('chat')" id="btn-chat">AI TUTOR</button>
+    <button onclick="window.showScreen('settings')" id="btn-settings">SETTINGS</button>
+</nav>
+
+<div id="home" class="screen active-screen">
+    <div class="hero">
+        <h1>JAMB AI ELITE</h1>
+        <p style="color: #aaa; margin-bottom: 30px;">The smartest way to hit 300+ in your UTME.</p>
+        <button class="action-btn" style="width: 100%; height: 60px;" onclick="window.showScreen('exam')">START 180-QUESTION MOCK</button>
+    </div>
+</div>
+
+<div id="exam" class="screen">
+    <div id="timer-box" style="text-align:center; color: var(--prim); font-weight: 900; font-size: 1.5rem; margin-bottom: 20px;">120:00</div>
+    <div id="exam-init" style="text-align:center;">
+        <button class="action-btn" style="height:50px; margin: 0 auto;" onclick="window.launchExam()">GENERATE FULL EXAM</button>
+        <p id="exam-status" style="margin-top:15px; font-size: 0.9rem; color: #888;"></p>
+    </div>
+    <div id="exam-render"></div>
+</div>
+
+<div id="chat" class="screen" style="padding:0;">
+    <div id="chat-logs">
+        <div class="msg ai-msg">Welcome! I'm your JAMB AI Tutor. Type any topic you're struggling with below.</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="chat-query" class="main-input" placeholder="Ask anything...">
+        <button class="action-btn" onclick="window.sendChat()">SEND</button>
+    </div>
+</div>
+
+<div id="settings" class="screen">
+    <div style="max-width:500px; margin: auto; width:100%;">
+        <h2>Settings</h2>
+        <p style="font-size: 0.85rem; color: #888;">Enter your Google Gemini API Key.</p>
+        <input type="password" id="api-key-val" class="main-input" placeholder="AIzaSy...">
+        <button class="action-btn" style="width:100%; margin-top:20px; height:50px;" onclick="window.saveKey()">SAVE KEY</button>
+    </div>
+</div>
+
+<script type="importmap">
+  { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+</script>
+
+<script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    // --- FIX: Attach functions to window so buttons can see them ---
+    
+    window.showScreen = (id) => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active-screen');
+        const btn = document.getElementById('btn-'+id);
+        if(btn) btn.classList.add('active');
+    };
+
+    window.saveKey = () => {
+        const val = document.getElementById('api-key-val').value.trim();
+        if(val) {
+            localStorage.setItem('jamb_key_2026', val);
+            alert("API Key Saved Successfully!");
+        } else {
+            alert("Please enter a valid key.");
+        }
+    };
+
+    async function callAI(prompt) {
+        const key = localStorage.getItem('jamb_key_2026');
+        if(!key) { alert("Add your API key in Settings first!"); return null; }
+        
+        try {
+            const genAI = new GoogleGenerativeAI(key);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(prompt);
+            return result.response.text();
+        } catch (e) {
+            console.error(e);
+            return "Connection Error. Check your API key or internet.";
+        }
+    }
+
+    window.sendChat = async () => {
+        const input = document.getElementById('chat-query');
+        const logs = document.getElementById('chat-logs');
+        if(!input.value) return;
+
+        const text = input.value;
+        logs.innerHTML += `<div class="msg user-msg">${text}</div>`;
+        input.value = "";
+        logs.scrollTop = logs.scrollHeight;
+
+        const response = await callAI("Answer as a JAMB expert teacher: " + text);
+        logs.innerHTML += `<div class="msg ai-msg">${response}</div>`;
+        logs.scrollTop = logs.scrollHeight;
+    };
+
+    window.launchExam = async () => {
+        const status = document.getElementById('exam-status');
+        status.innerText = "Generating 180 questions... Please wait.";
+        
+        // We fetch in batches to avoid timeouts
+        const eng = await callAI("Generate 10 JAMB English questions as JSON: [{'q':'text','o':['a','b','c','d'],'a':0}]. No markdown.");
+        
+        try {
+            const data = JSON.parse(eng.replace(/```json|```/g, ""));
+            const render = document.getElementById('exam-render');
+            document.getElementById('exam-init').style.display = 'none';
+            
+            render.innerHTML = data.map((q, i) => `
+                <div class="q-card">
+                    <p><strong>${i+1}.</strong> ${q.q}</p>
+                    ${q.o.map((opt, oi) => `<button class="opt-btn" onclick="this.style.background='#00ff88'; this.style.color='#000';">${opt}</button>`).join('')}
+                </div>
+            `).join('');
+            status.innerText = "";
+        } catch (e) {
+            status.innerText = "Error parsing AI response. Make sure your API key is valid.";
+        }
+    };
+</script>
+</body>
+</html>
 
         .main-input {
             flex-grow: 1;
