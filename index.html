@@ -279,28 +279,47 @@
     };
 
     window.launchExam = async () => {
-        const status = document.getElementById('exam-status');
-        status.innerText = "Generating 180 questions... Please wait.";
+    const status = document.getElementById('exam-status');
+    const render = document.getElementById('exam-render');
+    status.innerText = "Generating 180 questions... (Step 1/2)";
+    
+    // 1. Force the model to use JSON mode if possible
+    const key = localStorage.getItem('jamb_key_2026');
+    const genAI = new GoogleGenerativeAI(key);
+    const model = genAI.getGenerativeModel({ 
+        model: "gemini-1.5-flash",
+        generationConfig: { responseMimeType: "application/json" } // Standardizes output
+    });
+
+    try {
+        // Requesting a smaller batch first to ensure stability
+        const prompt = "Generate 20 JAMB English questions. Return ONLY a JSON array of objects with keys 'q' (question string), 'o' (array of 4 options), and 'a' (index of correct answer 0-3).";
+        const result = await model.generateContent(prompt);
+        let text = await result.response.text();
+
+        // 2. CLEANING LOGIC: Strip markdown backticks if they exist
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
+        const data = JSON.parse(text);
         
-        // We fetch in batches to avoid timeouts
-        const eng = await callAI("Generate 10 JAMB English questions as JSON: [{'q':'text','o':['a','b','c','d'],'a':0}]. No markdown.");
+        document.getElementById('exam-init').style.display = 'none';
+        render.innerHTML = data.map((q, i) => `
+            <div class="q-card" style="animation-delay: ${i * 0.1}s">
+                <p><strong>${i+1}.</strong> ${q.q}</p>
+                ${q.o.map((opt, oi) => `
+                    <button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.style.border='none'); this.style.border='2px solid #00ff88';">
+                        ${opt}
+                    </button>`).join('')}
+            </div>
+        `).join('');
         
-        try {
-            const data = JSON.parse(eng.replace(/```json|```/g, ""));
-            const render = document.getElementById('exam-render');
-            document.getElementById('exam-init').style.display = 'none';
-            
-            render.innerHTML = data.map((q, i) => `
-                <div class="q-card">
-                    <p><strong>${i+1}.</strong> ${q.q}</p>
-                    ${q.o.map((opt, oi) => `<button class="opt-btn" onclick="this.style.background='#00ff88'; this.style.color='#000';">${opt}</button>`).join('')}
-                </div>
-            `).join('');
-            status.innerText = "";
-        } catch (e) {
-            status.innerText = "Error parsing AI response. Make sure your API key is valid.";
-        }
-    };
+        status.innerText = "Exam Loaded Successfully!";
+    } catch (e) {
+        console.error("Parsing Error:", e);
+        status.innerText = "AI sent a messy response. Please click 'Generate' again.";
+    }
+};
+
 </script>
 </body>
 </html>
