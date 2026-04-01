@@ -96,22 +96,34 @@
 
     // --- CORE AI CALL (With Cleaner Logic) ---
     async function askAI(prompt) {
-        const key = localStorage.getItem('jamb_key');
-        if(!key) return "Error: No API Key found in Settings.";
-        
-        try {
-            const genAI = new GoogleGenerativeAI(key);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const result = await model.generateContent(prompt);
-            let response = await result.response.text();
-            
-            // Clean up Markdown formatting if AI sends it
-            return response.replace(/```/g, "").trim();
-        } catch (e) {
-            console.error(e);
-            return "Connection Error. Check your internet or API key.";
-        }
+    const key = localStorage.getItem('jamb_key');
+    if(!key) return "Error: No API Key found in Settings.";
+    
+    try {
+        const genAI = new GoogleGenerativeAI(key);
+        // We add a 'safety' check for the model initialization
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash"
+        });
+
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            // This helps bypass some browser security triggers
+            generationConfig: {
+                maxOutputTokens: 800,
+            }
+        });
+
+        const response = await result.response;
+        return response.text().replace(/```json|```/g, "").trim();
+    } catch (e) {
+        console.error("AI Error:", e);
+        // This will tell us exactly what went wrong in the console
+        if (e.message.includes("403")) return "Error: API Key restricted or location not supported.";
+        if (e.message.includes("401")) return "Error: Invalid API Key.";
+        return "Connection Error. Check your internet or API key.";
     }
+}
 
     // --- CHAT LOGIC ---
     window.sendChat = async () => {
