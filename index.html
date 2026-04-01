@@ -26,11 +26,8 @@
             flex-direction: column; 
         }
         
-        body {
-            padding-bottom: 70px;  /* extra space for footer on all pages */
-        }
+        body { padding-bottom: 70px; }
 
-        /* Navigation */
         nav { 
             background: var(--card); 
             display: flex; 
@@ -51,7 +48,6 @@
 
         nav button.active { color: var(--prim); border-bottom: 2px solid var(--prim); }
 
-        /* Main scrollable area */
         main {
             flex: 1;
             padding: 15px;
@@ -60,7 +56,6 @@
         .screen { display: none; }
         .active-screen { display: block; animation: fadeIn 0.2s ease; }
 
-        /* Footer (visible on chat) */
         footer {
             background: var(--card);
             border-top: 1px solid var(--border);
@@ -75,7 +70,6 @@
 
         .chat-active footer { display: block; }
 
-        /* UI Components */
         .glass-card { 
             background: var(--card); 
             border: 1px solid var(--border); 
@@ -96,6 +90,7 @@
         }
         .btn:active { transform: scale(0.98); }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: #30363d; color: white; }
         
         .input-group { display: flex; gap: 8px; }
         .input-group input { 
@@ -108,7 +103,6 @@
             font-size: 16px;
         }
 
-        /* Chat bubbles */
         .bubble { 
             padding: 12px; 
             border-radius: 12px; 
@@ -120,7 +114,6 @@
         .user-bubble { background: var(--accent); align-self: flex-end; margin-left: auto; }
         .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
 
-        /* Quiz elements */
         .q-card { 
             background: #0d1117; 
             border-left: 4px solid var(--prim); 
@@ -142,10 +135,8 @@
             transition: 0.05s;
         }
         .opt:active { transform: scale(0.99); }
-        .opt.correct-highlight { border: 2px solid var(--prim); background: rgba(0,255,136,0.1); }
-        .opt.wrong-highlight { border: 2px solid var(--danger); background: rgba(255,75,43,0.1); }
+        .opt.selected { border: 2px solid var(--prim); background: rgba(0,255,136,0.1); }
 
-        /* Timer and calculator */
         .timer { 
             font-size: 1.8rem; 
             font-family: monospace; 
@@ -155,6 +146,7 @@
             display: inline-block; 
             margin-bottom: 10px;
         }
+        
         .calc-widget {
             background: var(--card);
             border-radius: 12px;
@@ -186,7 +178,6 @@
         }
         .calc-btn:active { background: #30363d; }
 
-        /* Subject chips */
         .subject-chips {
             display: flex;
             flex-wrap: wrap;
@@ -207,7 +198,6 @@
             border-color: var(--prim);
         }
 
-        /* Navigation buttons */
         .nav-buttons {
             display: flex;
             gap: 10px;
@@ -215,7 +205,6 @@
         }
         .nav-buttons button { flex: 1; }
 
-        /* Debug console */
         .debug-console {
             background: #0d1117;
             border: 1px solid var(--border);
@@ -235,6 +224,18 @@
         .debug-log.error { color: var(--danger); }
         .debug-log.success { color: var(--prim); }
 
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         @media (max-width: 600px) {
@@ -257,7 +258,7 @@
     <div id="home" class="screen active-screen">
         <div class="glass-card" style="text-align:center;">
             <h1 style="color:var(--prim); margin:0 0 10px 0;">JAMB 2026</h1>
-            <p>AI-powered mock exams with real-time feedback</p>
+            <p>AI-powered mock exams with on-demand question generation</p>
             <div class="subject-chips" id="subject-chips">
                 <div class="chip selected" data-subj="English">English</div>
                 <div class="chip selected" data-subj="Mathematics">Mathematics</div>
@@ -274,9 +275,9 @@
     <div id="exam" class="screen">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div class="timer" id="exam-timer">02:00:00</div>
-            <button id="generate-exam-btn" class="btn" style="width: auto; padding: 8px 20px;">🎲 Generate AI Questions</button>
+            <div id="progress-indicator" style="font-size: 0.9rem;">0/180 answered</div>
         </div>
-        <div id="exam-content" style="display: none;">
+        <div id="exam-content">
             <div id="question-area"></div>
             <div class="nav-buttons">
                 <button id="prev-q">◀ Previous</button>
@@ -299,7 +300,7 @@
                 <strong>🐛 API Debug Log</strong>
                 <button id="clear-exam-debug" style="background: none; border: none; color: var(--prim); cursor: pointer;">Clear</button>
             </div>
-            <div id="exam-debug-logs">Ready. Click 'Generate AI Questions' to start...</div>
+            <div id="exam-debug-logs">Ready. Questions will be generated on-demand as you navigate.</div>
         </div>
     </div>
 
@@ -324,6 +325,7 @@
             <input type="password" id="api-key-input" placeholder="Paste your API key here" style="width:100%; padding:12px; margin-bottom:10px; background:#0d1117; color:white; border-radius:8px;">
             <button class="btn" id="save-api-btn">SAVE KEY</button>
             <p style="font-size:0.7rem; margin-top:10px;">Get your key from <a href="https://aistudio.google.com/" target="_blank" style="color:var(--prim);">Google AI Studio</a></p>
+            <p style="font-size:0.7rem; margin-top:5px;">⚠️ Questions are generated on-demand (1 API call per question). This minimizes quota usage.</p>
         </div>
     </div>
 </main>
@@ -345,13 +347,18 @@
 
     // ---------- GLOBAL ----------
     let apiKey = localStorage.getItem('jamb_api_key') || '';
-    let currentQuestions = [];
+    let selectedSubjects = [];
+    let questionBank = {};  // Format: { "English": [{ question, options, correct, explanation, generated }] }
     let userAnswers = [];
     let currentQIndex = 0;
-    let examTimer = 7200; // 2 hours
+    let examTimer = 7200;
     let timerInterval = null;
     let examActive = false;
     let calcExpression = "0";
+    
+    // Total questions = 30 per subject (180 total)
+    const QUESTIONS_PER_SUBJECT = 30;
+    let totalQuestions = 0;
 
     // Debug logging
     function addDebugLog(containerId, message, type = 'info') {
@@ -366,92 +373,214 @@
         while (container.children.length > 100) container.removeChild(container.firstChild);
     }
 
-    // AI Call with logging – try Gemini 2.0 Flash first, fallback to gemini-pro
-    async function callGemini(prompt, debugContainer, context = '') {
+    // AI Call - generates ONE question at a time
+    async function generateSingleQuestion(subject, questionNumber) {
         if (!apiKey) {
-            addDebugLog(debugContainer, `❌ No API key. Please add in Settings.`, 'error');
+            addDebugLog('exam-debug-logs', `❌ No API key. Please add in Settings.`, 'error');
             return null;
         }
-        addDebugLog(debugContainer, `📤 REQUEST: ${context || prompt.substring(0, 80)}...`, 'info');
         
-        const modelsToTry = ['gemini-2.0-flash', 'gemini-pro']; // order: 2.0 first, then fallback
-        let lastError = null;
+        addDebugLog('exam-debug-logs', `📤 Generating question ${questionNumber + 1} for ${subject}...`, 'info');
         
-        for (const modelName of modelsToTry) {
-            try {
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: modelName });
-                const result = await model.generateContent(prompt);
-                const text = result.response.text();
-                addDebugLog(debugContainer, `✅ SUCCESS (${modelName}): ${text.length} chars`, 'success');
-                return text;
-            } catch (e) {
-                addDebugLog(debugContainer, `⚠️ ${modelName} failed: ${e.message}`, 'error');
-                lastError = e;
-                // continue to next model
-            }
-        }
+        const prompt = `Generate ONE JAMB (Nigerian) multiple-choice question for ${subject}.
         
-        addDebugLog(debugContainer, `❌ All models failed. Last error: ${lastError?.message}`, 'error');
-        return null;
-    }
-
-    // ---------- MOCK EXAM ----------
-    async function generateMockQuestions() {
-        const selected = Array.from(document.querySelectorAll('#subject-chips .chip.selected'))
-            .map(c => c.dataset.subj);
-        if (selected.length === 0) {
-            addDebugLog('exam-debug-logs', '⚠️ No subjects selected!', 'error');
-            return null;
-        }
-        addDebugLog('exam-debug-logs', `🎯 Generating 180 questions for: ${selected.join(', ')}`, 'info');
+        Format your response EXACTLY like this (use "|||" as separator):
+        Question: [your question text] ||| Correct Answer: [the correct option text] ||| Wrong Options: [option2] ||| [option3] ||| [option4]
         
-        const prompt = `Generate exactly 180 JAMB (Nigerian) multiple-choice questions distributed evenly among these subjects: ${selected.join(', ')}.
-        For each question, provide JSON: {"subject":"Subject","text":"Question","options":["A","B","C","D"],"correct":0,"explanation":"..."}
-        Return ONLY a valid JSON array of 180 objects. Make questions realistic for JAMB/WAEC.`;
+        Example format:
+        What is the capital of Nigeria? ||| Correct Answer: Abuja ||| Wrong Options: Lagos ||| Kano ||| Ibadan
         
-        const response = await callGemini(prompt, 'exam-debug-logs', 'Generating 180 questions');
-        if (!response) return null;
+        Make the question realistic for JAMB/WAEC level. Return ONLY the formatted response, no extra text.`;
         
         try {
-            let jsonStr = response.match(/\[[\s\S]*\]/)?.[0] || response;
-            const questions = JSON.parse(jsonStr);
-            if (Array.isArray(questions) && questions.length >= 150) {
-                addDebugLog('exam-debug-logs', `✅ Generated ${questions.length} questions`, 'success');
-                return questions.slice(0, 180);
-            }
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
+            
+            addDebugLog('exam-debug-logs', `✅ Received response for ${subject} Q${questionNumber + 1}`, 'success');
+            
+            // Parse the response
+            return parseQuestionResponse(responseText, subject);
         } catch (e) {
-            addDebugLog('exam-debug-logs', `❌ Parse error: ${e.message}`, 'error');
+            addDebugLog('exam-debug-logs', `❌ API Error: ${e.message}`, 'error');
+            return null;
         }
-        return generateFallbackQuestions(selected);
     }
-
-    function generateFallbackQuestions(subjects) {
-        const questions = [];
-        const per = Math.floor(180 / subjects.length);
-        subjects.forEach(subj => {
-            for (let i = 0; i < per; i++) {
-                questions.push({
-                    subject: subj,
-                    text: `${subj} Sample Question ${i+1}: Choose the correct option.`,
-                    options: ["Option A: Correct", "Option B: Alternative", "Option C: Another", "Option D: Last"],
-                    correct: 0,
-                    explanation: `This is a ${subj} practice question. The correct answer is A.`
-                });
+    
+    function parseQuestionResponse(text, subject) {
+        try {
+            // Split by the separator
+            const parts = text.split('|||').map(p => p.trim());
+            
+            if (parts.length < 4) {
+                addDebugLog('exam-debug-logs', `⚠️ Invalid response format. Using fallback.`, 'error');
+                return getFallbackQuestion(subject);
             }
-        });
-        return questions;
+            
+            // Extract question
+            let questionText = parts[0].replace(/^Question:\s*/i, '').trim();
+            
+            // Extract correct answer
+            let correctAnswer = parts[1].replace(/^Correct Answer:\s*/i, '').trim();
+            
+            // Extract wrong options
+            let wrongOptions = [];
+            for (let i = 2; i < parts.length; i++) {
+                let opt = parts[i].replace(/^Wrong Options:\s*/i, '').trim();
+                if (opt) wrongOptions.push(opt);
+            }
+            
+            // Combine all options
+            let allOptions = [correctAnswer, ...wrongOptions];
+            
+            // Shuffle options
+            for (let i = allOptions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
+            }
+            
+            const correctIndex = allOptions.findIndex(opt => opt === correctAnswer);
+            
+            return {
+                subject: subject,
+                text: questionText,
+                options: allOptions,
+                correct: correctIndex,
+                explanation: `The correct answer is "${correctAnswer}". This is a standard ${subject} concept.`,
+                generated: true
+            };
+        } catch (e) {
+            addDebugLog('exam-debug-logs', `⚠️ Parse error: ${e.message}`, 'error');
+            return getFallbackQuestion(subject);
+        }
     }
-
-    function startExam(questions) {
-        if (timerInterval) clearInterval(timerInterval);
-        currentQuestions = questions;
-        userAnswers = new Array(questions.length).fill(null);
+    
+    function getFallbackQuestion(subject) {
+        const fallbacks = {
+            English: "Choose the word that is most nearly opposite in meaning to 'Benevolent'.",
+            Mathematics: "Solve for x: 2x + 5 = 15",
+            Physics: "What is the SI unit of force?",
+            Chemistry: "What is the chemical symbol for Gold?",
+            Biology: "Which organ is responsible for pumping blood?",
+            Government: "What is the supreme law of Nigeria?"
+        };
+        
+        return {
+            subject: subject,
+            text: fallbacks[subject] || `${subject} practice question: Choose the correct option.`,
+            options: ["Option A: Correct", "Option B: Incorrect", "Option C: Incorrect", "Option D: Incorrect"],
+            correct: 0,
+            explanation: `This is a practice question for ${subject}. The correct answer is Option A.`,
+            generated: false
+        };
+    }
+    
+    // Get or generate a question for a specific subject and index
+    async function getQuestion(subject, subjectIndex, questionNumber) {
+        // Initialize bank for this subject if needed
+        if (!questionBank[subject]) {
+            questionBank[subject] = [];
+        }
+        
+        // Check if question already exists
+        if (questionBank[subject][questionNumber]) {
+            addDebugLog('exam-debug-logs', `📖 Using cached question for ${subject} Q${questionNumber + 1}`, 'info');
+            return questionBank[subject][questionNumber];
+        }
+        
+        // Generate new question
+        const question = await generateSingleQuestion(subject, questionNumber);
+        if (question) {
+            questionBank[subject][questionNumber] = question;
+            addDebugLog('exam-debug-logs', `💾 Cached question for ${subject} Q${questionNumber + 1}`, 'success');
+            return question;
+        }
+        
+        // Return fallback if generation failed
+        const fallback = getFallbackQuestion(subject);
+        questionBank[subject][questionNumber] = fallback;
+        return fallback;
+    }
+    
+    // Get question at current index (maps index to subject and position)
+    async function getCurrentQuestion() {
+        if (!selectedSubjects.length) return null;
+        
+        const questionsPerSubject = Math.floor(180 / selectedSubjects.length);
+        const subjectIndex = Math.floor(currentQIndex / questionsPerSubject);
+        const questionNumber = currentQIndex % questionsPerSubject;
+        
+        if (subjectIndex >= selectedSubjects.length) return null;
+        
+        const subject = selectedSubjects[subjectIndex];
+        const question = await getQuestion(subject, subjectIndex, questionNumber);
+        
+        // Store in global questions array for easy access
+        if (!window.globalQuestions) window.globalQuestions = [];
+        window.globalQuestions[currentQIndex] = question;
+        
+        return question;
+    }
+    
+    async function renderQuestion() {
+        const q = await getCurrentQuestion();
+        if (!q) {
+            document.getElementById('question-area').innerHTML = '<div class="q-card">Loading questions...</div>';
+            return;
+        }
+        
+        const userAnswer = userAnswers[currentQIndex];
+        const html = `
+            <div class="q-card">
+                <p><strong>Question ${currentQIndex + 1}/${totalQuestions}</strong><br>
+                <span style="color: var(--prim);">📖 ${q.subject}</span></p>
+                <p style="margin: 15px 0; font-size: 1.1rem;">${q.text}</p>
+                <div class="options-grid">
+                    ${q.options.map((opt, idx) => `
+                        <button class="opt ${userAnswer === idx ? 'selected' : ''}" 
+                                onclick="window.selectAnswer(${idx})">${String.fromCharCode(65+idx)}. ${opt}</button>
+                    `).join('')}
+                </div>
+                ${userAnswer !== null ? `<div style="margin-top: 10px; padding: 8px; background: rgba(0,255,136,0.1); border-radius: 8px;">💡 Explanation: ${q.explanation}</div>` : ''}
+            </div>
+        `;
+        document.getElementById('question-area').innerHTML = html;
+        updateProgress();
+    }
+    
+    window.selectAnswer = (idx) => {
+        userAnswers[currentQIndex] = idx;
+        renderQuestion();
+        updateProgress();
+    };
+    
+    function updateProgress() {
+        const answered = userAnswers.filter(a => a !== null).length;
+        document.getElementById('progress-indicator').innerHTML = `${answered}/${totalQuestions} answered`;
+    }
+    
+    function startExam() {
+        // Get selected subjects
+        selectedSubjects = Array.from(document.querySelectorAll('#subject-chips .chip.selected'))
+            .map(c => c.dataset.subj);
+        
+        if (selectedSubjects.length === 0) {
+            alert('Please select at least one subject on the Home screen.');
+            return false;
+        }
+        
+        totalQuestions = 180;
+        userAnswers = new Array(totalQuestions).fill(null);
         currentQIndex = 0;
         examActive = true;
         examTimer = 7200;
+        questionBank = {};
+        window.globalQuestions = [];
+        
         updateTimerDisplay();
         
+        if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             if (examActive && examTimer > 0) {
                 examTimer--;
@@ -460,75 +589,84 @@
             }
         }, 1000);
         
-        document.getElementById('exam-content').style.display = 'block';
-        document.getElementById('generate-exam-btn').style.display = 'none';
         renderQuestion();
-        addDebugLog('exam-debug-logs', `🚀 Exam started. ${questions.length} questions loaded.`, 'success');
+        addDebugLog('exam-debug-logs', `🚀 Exam started with subjects: ${selectedSubjects.join(', ')}`, 'success');
+        return true;
     }
-
+    
     function updateTimerDisplay() {
         let hrs = Math.floor(examTimer / 3600);
         let mins = Math.floor((examTimer % 3600) / 60);
         let secs = examTimer % 60;
         document.getElementById('exam-timer').innerText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
     }
-
-    function renderQuestion() {
-        if (!currentQuestions.length) return;
-        const q = currentQuestions[currentQIndex];
-        const html = `
-            <div class="q-card">
-                <p><strong>${currentQIndex+1}. [${q.subject}]</strong> ${q.text}</p>
-                ${q.options.map((opt, idx) => `
-                    <button class="opt ${userAnswers[currentQIndex] === idx ? 'correct-highlight' : ''}" 
-                            onclick="window.selectAnswer(${idx})">${String.fromCharCode(65+idx)}. ${opt}</button>
-                `).join('')}
-            </div>
-        `;
-        document.getElementById('question-area').innerHTML = html;
+    
+    async function nextQuestion() {
+        if (currentQIndex < totalQuestions - 1) {
+            currentQIndex++;
+            await renderQuestion();
+        }
     }
-
-    window.selectAnswer = (idx) => {
-        userAnswers[currentQIndex] = idx;
-        renderQuestion();
-    };
-
+    
+    async function prevQuestion() {
+        if (currentQIndex > 0) {
+            currentQIndex--;
+            await renderQuestion();
+        }
+    }
+    
     function submitExam() {
         if (timerInterval) clearInterval(timerInterval);
         examActive = false;
+        
         let score = 0;
-        currentQuestions.forEach((q, i) => {
-            if (userAnswers[i] === q.correct) score++;
-        });
-        const percent = ((score / currentQuestions.length) * 100).toFixed(1);
-        alert(`🎉 Mock Exam Completed!\nScore: ${score}/${currentQuestions.length} (${percent}%)\nCheck debug console for detailed results.`);
-        addDebugLog('exam-debug-logs', `📊 RESULT: ${score}/${currentQuestions.length} (${percent}%)`, 'success');
-        document.getElementById('exam-content').style.display = 'none';
-        document.getElementById('generate-exam-btn').style.display = 'block';
-        document.getElementById('generate-exam-btn').innerText = '🔄 Generate New AI Questions';
+        for (let i = 0; i < totalQuestions; i++) {
+            const q = window.globalQuestions[i];
+            if (q && userAnswers[i] === q.correct) score++;
+        }
+        
+        const percent = ((score / totalQuestions) * 100).toFixed(1);
+        alert(`🎉 Mock Exam Completed!\nScore: ${score}/${totalQuestions} (${percent}%)\n\nCheck debug console for details.`);
+        addDebugLog('exam-debug-logs', `📊 FINAL RESULT: ${score}/${totalQuestions} (${percent}%)`, 'success');
     }
-
+    
     // ---------- CHAT ----------
     async function sendChat() {
         const input = document.getElementById('chat-input');
         const msg = input.value.trim();
         if (!msg) return;
+        
         const chatWin = document.getElementById('chat-window');
         chatWin.innerHTML += `<div class="bubble user-bubble">${escapeHtml(msg)}</div>`;
         input.value = '';
         chatWin.scrollTop = chatWin.scrollHeight;
         
-        const response = await callGemini(`You are a JAMB tutor. Answer concisely: ${msg}`, 'chat-debug-logs', 'Chat message');
-        const reply = response || "⚠️ Sorry, I couldn't process that. Please check your API key.";
-        chatWin.innerHTML += `<div class="bubble ai-bubble">${escapeHtml(reply)}</div>`;
+        if (!apiKey) {
+            chatWin.innerHTML += `<div class="bubble ai-bubble">⚠️ Please add your API key in Settings first.</div>`;
+            return;
+        }
+        
+        addDebugLog('chat-debug-logs', `📤 Sending chat: ${msg.substring(0, 50)}...`, 'info');
+        
+        try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const result = await model.generateContent(`You are a JAMB tutor. Answer concisely: ${msg}`);
+            const reply = result.response.text();
+            chatWin.innerHTML += `<div class="bubble ai-bubble">${escapeHtml(reply)}</div>`;
+            addDebugLog('chat-debug-logs', `✅ Chat response received`, 'success');
+        } catch (e) {
+            addDebugLog('chat-debug-logs', `❌ Chat error: ${e.message}`, 'error');
+            chatWin.innerHTML += `<div class="bubble ai-bubble">⚠️ Error: ${e.message}</div>`;
+        }
         chatWin.scrollTop = chatWin.scrollHeight;
     }
-
+    
     function clearChat() {
         document.getElementById('chat-window').innerHTML = '<div class="bubble ai-bubble">Chat cleared! How can I help?</div>';
         addDebugLog('chat-debug-logs', '🗑️ Chat cleared', 'info');
     }
-
+    
     function escapeHtml(str) {
         return str.replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
@@ -537,14 +675,14 @@
             return m;
         });
     }
-
+    
     // ---------- CALCULATOR ----------
     function updateCalcScreen() {
         const screen = document.getElementById('calc-screen');
         if (screen) screen.innerText = calcExpression;
     }
-
-    // ---------- INITIALIZATION & EVENT LISTENERS ----------
+    
+    // ---------- INITIALIZATION ----------
     window.showScreen = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById(id).classList.add('active-screen');
@@ -552,44 +690,16 @@
         document.getElementById(`nav-${id}`).classList.add('active');
         if (id === 'chat') document.body.classList.add('chat-active');
         else document.body.classList.remove('chat-active');
+        
+        if (id === 'exam' && !examActive) {
+            startExam();
+        }
     };
-
-    // Subject chips logic
-    function setupSubjectChips() {
-        const chips = document.querySelectorAll('.chip');
-        chips.forEach(chip => {
-            chip.addEventListener('click', () => chip.classList.toggle('selected'));
-        });
-        document.getElementById('generate-exam-btn').addEventListener('click', async () => {
-            const selectedHome = Array.from(document.querySelectorAll('#subject-chips .chip.selected')).map(c => c.dataset.subj);
-            if (selectedHome.length === 0) {
-                alert('Please select at least one subject on the Home screen.');
-                return;
-            }
-            const btn = document.getElementById('generate-exam-btn');
-            btn.innerText = '⏳ Generating AI questions...';
-            btn.disabled = true;
-            const questions = await generateMockQuestions();
-            if (questions) {
-                startExam(questions);
-            } else {
-                alert('Failed to generate questions. Check API key or try again.');
-                btn.innerText = '🎲 Generate AI Questions';
-                btn.disabled = false;
-            }
-        });
-    }
-
-    // Navigation in exam
-    document.getElementById('prev-q')?.addEventListener('click', () => {
-        if (currentQIndex > 0) { currentQIndex--; renderQuestion(); }
-    });
-    document.getElementById('next-q')?.addEventListener('click', () => {
-        if (currentQIndex < currentQuestions.length - 1) { currentQIndex++; renderQuestion(); }
-    });
+    
+    // Event Listeners
+    document.getElementById('prev-q')?.addEventListener('click', prevQuestion);
+    document.getElementById('next-q')?.addEventListener('click', nextQuestion);
     document.getElementById('submit-exam')?.addEventListener('click', submitExam);
-
-    // Settings
     document.getElementById('save-api-btn')?.addEventListener('click', () => {
         const key = document.getElementById('api-key-input').value.trim();
         if (key) {
@@ -600,22 +710,23 @@
             addDebugLog('chat-debug-logs', '🔑 API key updated', 'success');
         } else alert('Enter a valid key');
     });
-
-    // Chat buttons
+    
     document.getElementById('send-chat-btn')?.addEventListener('click', sendChat);
     document.getElementById('clear-chat-btn')?.addEventListener('click', clearChat);
     document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
-
-    // Debug clear
+    
     document.getElementById('clear-exam-debug')?.addEventListener('click', () => {
         document.getElementById('exam-debug-logs').innerHTML = '';
-        addDebugLog('exam-debug-logs', 'Logs cleared', 'info');
     });
     document.getElementById('clear-chat-debug')?.addEventListener('click', () => {
         document.getElementById('chat-debug-logs').innerHTML = '';
-        addDebugLog('chat-debug-logs', 'Logs cleared', 'info');
     });
-
+    
+    // Subject chips
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => chip.classList.toggle('selected'));
+    });
+    
     // Calculator
     document.querySelectorAll('.calc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -638,13 +749,11 @@
         calcExpression = "0";
         updateCalcScreen();
     });
-
+    
     // Load saved API key
     if (apiKey) document.getElementById('api-key-input').value = apiKey;
-    setupSubjectChips();
     updateCalcScreen();
-    addDebugLog('exam-debug-logs', '✅ Ready. Add API key in Settings then generate questions.', 'success');
-    addDebugLog('chat-debug-logs', '✅ Chat ready.', 'success');
+    addDebugLog('exam-debug-logs', '✅ Ready. Questions will be generated on-demand as you navigate.', 'success');
 </script>
 </body>
 </html>
