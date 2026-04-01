@@ -21,30 +21,31 @@
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            height: 100vh; 
+            min-height: 100vh;
             display: flex; 
             flex-direction: column; 
-            overflow: hidden; 
         }
-
+        
         body {
-            padding-bottom: 70px;
+            padding-bottom: 70px;  /* extra space for footer on all pages */
         }
 
         /* Navigation */
         nav { 
-            flex: 0 0 60px; 
             background: var(--card); 
             display: flex; 
             justify-content: space-around; 
             align-items: center;
             border-bottom: 2px solid var(--prim);
+            position: sticky;
+            top: 0;
             z-index: 10;
+            padding: 12px 0;
         }
 
         nav button { 
             background: none; border: none; color: #8b949e; 
-            font-weight: bold; cursor: pointer; padding: 10px; font-size: 0.9rem;
+            font-weight: bold; cursor: pointer; padding: 8px 12px; font-size: 0.9rem;
             transition: 0.2s;
         }
 
@@ -52,24 +53,24 @@
 
         /* Main scrollable area */
         main {
-            flex: 1; 
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            flex: 1;
             padding: 15px;
-            display: flex;
-            flex-direction: column;
         }
 
-        .screen { display: none; width: 100%; flex-direction: column; }
-        .active-screen { display: flex; animation: fadeIn 0.2s ease; }
+        .screen { display: none; }
+        .active-screen { display: block; animation: fadeIn 0.2s ease; }
 
-        /* Footer (only visible on chat) */
+        /* Footer (visible on chat) */
         footer {
-            flex: 0 0 auto;
             background: var(--card);
             border-top: 1px solid var(--border);
             padding: 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             display: none;
+            z-index: 20;
         }
 
         .chat-active footer { display: block; }
@@ -116,7 +117,7 @@
             line-height: 1.4; 
             font-size: 0.9rem; 
         }
-        .user-bubble { background: var(--accent); align-self: flex-end; }
+        .user-bubble { background: var(--accent); align-self: flex-end; margin-left: auto; }
         .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
 
         /* Quiz elements */
@@ -235,6 +236,11 @@
         .debug-log.success { color: var(--prim); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 600px) {
+            .timer { font-size: 1.2rem; }
+            .btn { padding: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -271,7 +277,6 @@
             <button id="generate-exam-btn" class="btn" style="width: auto; padding: 8px 20px;">🎲 Generate AI Questions</button>
         </div>
         <div id="exam-content" style="display: none;">
-            <div class="subject-chips" id="exam-subjects"></div>
             <div id="question-area"></div>
             <div class="nav-buttons">
                 <button id="prev-q">◀ Previous</button>
@@ -361,29 +366,39 @@
         while (container.children.length > 100) container.removeChild(container.firstChild);
     }
 
-    // AI Call with logging
+    // AI Call with logging – try Gemini 2.0 Flash first, fallback to gemini-pro
     async function callGemini(prompt, debugContainer, context = '') {
         if (!apiKey) {
             addDebugLog(debugContainer, `❌ No API key. Please add in Settings.`, 'error');
             return null;
         }
         addDebugLog(debugContainer, `📤 REQUEST: ${context || prompt.substring(0, 80)}...`, 'info');
-        try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
-            addDebugLog(debugContainer, `✅ SUCCESS: ${text.length} chars`, 'success');
-            return text;
-        } catch (e) {
-            addDebugLog(debugContainer, `❌ ERROR: ${e.message}`, 'error');
-            return null;
+        
+        const modelsToTry = ['gemini-2.0-flash', 'gemini-pro']; // order: 2.0 first, then fallback
+        let lastError = null;
+        
+        for (const modelName of modelsToTry) {
+            try {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent(prompt);
+                const text = result.response.text();
+                addDebugLog(debugContainer, `✅ SUCCESS (${modelName}): ${text.length} chars`, 'success');
+                return text;
+            } catch (e) {
+                addDebugLog(debugContainer, `⚠️ ${modelName} failed: ${e.message}`, 'error');
+                lastError = e;
+                // continue to next model
+            }
         }
+        
+        addDebugLog(debugContainer, `❌ All models failed. Last error: ${lastError?.message}`, 'error');
+        return null;
     }
 
     // ---------- MOCK EXAM ----------
     async function generateMockQuestions() {
-        const selected = Array.from(document.querySelectorAll('#subject-chips .chip.selected, #exam-subjects .chip.selected'))
+        const selected = Array.from(document.querySelectorAll('#subject-chips .chip.selected'))
             .map(c => c.dataset.subj);
         if (selected.length === 0) {
             addDebugLog('exam-debug-logs', '⚠️ No subjects selected!', 'error');
@@ -537,7 +552,6 @@
         document.getElementById(`nav-${id}`).classList.add('active');
         if (id === 'chat') document.body.classList.add('chat-active');
         else document.body.classList.remove('chat-active');
-        document.getElementById('main-content').scrollTop = 0;
     };
 
     // Subject chips logic
@@ -546,14 +560,12 @@
         chips.forEach(chip => {
             chip.addEventListener('click', () => chip.classList.toggle('selected'));
         });
-        // Copy selection to exam screen when starting
         document.getElementById('generate-exam-btn').addEventListener('click', async () => {
             const selectedHome = Array.from(document.querySelectorAll('#subject-chips .chip.selected')).map(c => c.dataset.subj);
             if (selectedHome.length === 0) {
                 alert('Please select at least one subject on the Home screen.');
                 return;
             }
-            // Show loading
             const btn = document.getElementById('generate-exam-btn');
             btn.innerText = '⏳ Generating AI questions...';
             btn.disabled = true;
