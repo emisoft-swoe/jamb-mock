@@ -2,216 +2,807 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JAMB AI ELITE | 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>JAMB UltraPrep | AI-Powered Mock Exam Platform</title>
     <style>
-        :root { --bg: #0a0c10; --card: #161b22; --prim: #00ff88; --accent: #58a6ff; --text: #f0f6fc; }
-        
-        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        
-        /* THE SECRET: Flex Column ensures 100% visibility */
-        html, body { 
-            background: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        }
+
+        /* Theme Variables - Light default */
+        :root {
+            --bg-primary: #f0f7ff;
+            --bg-secondary: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent: #3b82f6;
+            --accent-dark: #2563eb;
+            --accent-glow: rgba(59,130,246,0.3);
+            --card-bg: rgba(255,255,255,0.9);
+            --border: #e2e8f0;
+            --nav-bg: rgba(255,255,255,0.95);
+            --shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            --calculator-bg: #f1f5f9;
+            --option-hover: #f8fafc;
+        }
+
+        body.dark {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --accent: #60a5fa;
+            --accent-dark: #3b82f6;
+            --accent-glow: rgba(96,165,250,0.3);
+            --card-bg: rgba(30,41,59,0.95);
+            --border: #334155;
+            --nav-bg: rgba(15,23,42,0.98);
+            --shadow: 0 20px 35px -12px rgba(0,0,0,0.5);
+            --calculator-bg: #0f172a;
+            --option-hover: #334155;
         }
 
         body {
-            padding-bottom: 60px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* 1. TOP NAVIGATION (Fixed Height) */
-        nav { 
-            flex: 0 0 60px; 
-            background: var(--card); 
-            display: flex; 
-            justify-content: space-around; 
+        /* Navigation Bar */
+        .navbar {
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid var(--prim);
-            z-index: 10;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border);
         }
 
-        nav button { 
-            background: none; border: none; color: #8b949e; 
-            font-weight: bold; cursor: pointer; padding: 10px; font-size: 0.8rem;
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: pulse 2s infinite;
         }
 
-        nav button.active { color: var(--prim); border-bottom: 2px solid var(--prim); }
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
 
-        /* 2. MIDDLE CONTENT (Expands to fill, Scrolls) */
-        main {
-            flex: 1; 
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 15px;
+        .nav-btn {
+            padding: 0.7rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 40px;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .nav-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .nav-btn:hover:not(.active) {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .page.active-page {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(5px);
+            border-radius: 32px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 40px -15px rgba(0,0,0,0.2);
+        }
+
+        /* Home Page */
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 24px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        /* Mock Page */
+        .subject-selector {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .subject-chip {
+            padding: 0.6rem 1.2rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .subject-chip.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .question-area {
+            margin-top: 2rem;
+        }
+
+        .options-grid {
             display: flex;
             flex-direction: column;
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
-        .screen { display: none; width: 100%; height: 100%; flex-direction: column; }
-        .active-screen { display: flex; animation: fadeIn 0.2s ease; }
-
-        /* 3. BOTTOM BAR (Fixed Height, Always Visible) */
-        footer {
-            flex: 0 0 auto;
-            background: var(--card);
-            border-top: 1px solid #30363d;
-            padding: 10px;
-            display: none; /* Only shows on Chat screen */
+        .option-item {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
         }
 
-        .chat-active footer { display: block; }
+        .option-item:hover {
+            background: var(--option-hover);
+            transform: translateX(5px);
+        }
 
-        /* UI ELEMENTS */
-        .glass-card { background: var(--card); border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .btn { background: var(--prim); color: #0d1117; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; }
-        
-        .input-group { display: flex; gap: 8px; }
-        .input-group input { flex: 1; background: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 8px; font-size: 16px; }
+        .option-item.selected {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
 
-        .bubble { padding: 12px; border-radius: 12px; max-width: 85%; margin-bottom: 10px; line-height: 1.4; font-size: 0.9rem; }
-        .user-bubble { background: var(--accent); align-self: flex-end; }
-        .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
+        /* Calculator Widget */
+        .calculator-widget {
+            background: var(--calculator-bg);
+            border-radius: 28px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
 
-        .q-card { background: #0d1117; border-left: 4px solid var(--prim); padding: 12px; margin-bottom: 15px; border-radius: 6px; }
-        .opt { display: block; width: 100%; text-align: left; padding: 10px; margin: 5px 0; background: #21262d; border: 1px solid #30363d; color: white; border-radius: 6px; }
+        .calc-screen {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 20px;
+            font-size: 1.8rem;
+            text-align: right;
+            font-family: monospace;
+            margin-bottom: 1rem;
+        }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+        }
+
+        .calc-btn {
+            padding: 0.8rem;
+            border: none;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .calc-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* AI Chat Page */
+        .chat-container {
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            border-radius: 28px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.8rem 1.2rem;
+            border-radius: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.user {
+            background: var(--accent);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message.ai {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            align-self: flex-start;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 1rem;
+            gap: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Settings Page */
+        .setting-group {
+            margin-bottom: 2rem;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .theme-toggle {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 40px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .theme-btn.active-theme {
+            background: var(--accent);
+            color: white;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--accent-glow);
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: monospace;
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .message {
+                max-width: 95%;
+            }
+            .container {
+                padding: 0 1rem;
+            }
+        }
     </style>
 </head>
-<body class="home-active">
+<body>
 
-<nav>
-    <button onclick="window.showScreen('home')" id="nav-home" class="active">HOME</button>
-    <button onclick="window.showScreen('exam')" id="nav-exam">MOCK</button>
-    <button onclick="window.showScreen('chat')" id="nav-chat">TUTOR</button>
-    <button onclick="window.showScreen('settings')" id="nav-settings">⚙️</button>
+<nav class="navbar">
+    <div class="logo">📚 JAMB UltraPrep AI</div>
+    <div class="nav-links">
+        <button class="nav-btn active" data-page="home">🏠 Home</button>
+        <button class="nav-btn" data-page="mock">📝 Mock Exam</button>
+        <button class="nav-btn" data-page="chat">🤖 AI Chat</button>
+        <button class="nav-btn" data-page="settings">⚙️ Settings</button>
+    </div>
 </nav>
 
-<main id="main-content">
-    <div id="home" class="screen active-screen">
-        <div class="glass-card" style="text-align:center;">
-            <h1 style="color:var(--prim); margin:0 0 10px 0;">JAMB 2026</h1>
-            <select id="subject-select" style="width:100%; padding:10px; margin-bottom:15px; background:#0d1117; color:white; border-radius:8px;">
-                <option value="Physics">Physics</option>
-                <option value="Chemistry">Chemistry</option>
-                <option value="Biology">Biology</option>
-                <option value="Mathematics">Mathematics</option>
-            </select>
-            <button class="btn" onclick="window.showScreen('exam')">START PRACTICE</button>
+<div class="container">
+    <!-- Home Page -->
+    <div id="home" class="page active-page">
+        <div class="hero">
+            <h1>Welcome to JAMB UltraPrep</h1>
+            <p style="font-size: 1.2rem;">Your AI-powered companion for JAMB success</p>
+        </div>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div style="font-size: 3rem;">📝</div>
+                <h3>Mock Exams</h3>
+                <p>Practice with 180 questions, select your subjects, and track your progress</p>
+            </div>
+            <div class="feature-card">
+                <div style="font-size: 3rem;">🤖</div>
+                <h3>AI Tutor</h3>
+                <p>Get instant explanations and study help with Google AI</p>
+            </div>
+            <div class="feature-card">
+                <div style="font-size: 3rem;">🧮</div>
+                <h3>Built-in Calculator</h3>
+                <p>Quick calculations during your mock exam</p>
+            </div>
+            <div class="feature-card">
+                <div style="font-size: 3rem;">🎨</div>
+                <h3>Custom Themes</h3>
+                <p>Light/Dark mode for comfortable studying</p>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 2rem; text-align: center;">
+            <h3>Ready to Start?</h3>
+            <p>Select subjects and begin your JAMB mock exam, or chat with AI for help!</p>
+            <button onclick="switchPage('mock')" style="margin-top: 1rem;">Start Mock Exam →</button>
         </div>
     </div>
 
-    <div id="exam" class="screen">
-        <div id="timer" style="text-align:center; font-size: 1.2rem; color: var(--prim); font-weight: 900; margin-bottom: 10px;">120:00</div>
-        <button class="btn" id="gen-btn" onclick="window.generateQuiz()">GENERATE QUESTIONS</button>
-        <div id="quiz-container" style="margin-top:15px;"></div>
-    </div>
-
-    <div id="chat" class="screen">
-        <div id="chat-window" style="display:flex; flex-direction:column;">
-            <div class="bubble ai-bubble">Ready to study! Ask me anything.</div>
+    <!-- Mock Exam Page -->
+    <div id="mock" class="page">
+        <div class="card">
+            <h2>📝 JAMB Mock Exam</h2>
+            <div class="subject-selector" id="subjectSelector">
+                <div class="subject-chip" data-subject="English">English</div>
+                <div class="subject-chip" data-subject="Mathematics">Mathematics</div>
+                <div class="subject-chip" data-subject="Physics">Physics</div>
+                <div class="subject-chip" data-subject="Chemistry">Chemistry</div>
+                <div class="subject-chip" data-subject="Biology">Biology</div>
+                <div class="subject-chip" data-subject="Government">Government</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div class="timer" id="mockTimer">02:00:00</div>
+                <button id="startMockBtn">Start Mock Exam</button>
+            </div>
+            <div id="mockContent" style="display: none;">
+                <div id="questionArea" class="question-area"></div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button id="prevQuestion">◀ Previous</button>
+                    <button id="nextQuestion">Next ▶</button>
+                </div>
+                <button id="submitMock" style="background: #10b981; margin-top: 1rem;">Submit Exam</button>
+            </div>
+            <div class="calculator-widget">
+                <h3>🧮 Calculator</h3>
+                <div class="calc-screen" id="mockCalcScreen">0</div>
+                <div class="calc-buttons">
+                    <button class="calc-btn" data-val="7">7</button><button class="calc-btn" data-val="8">8</button><button class="calc-btn" data-val="9">9</button><button class="calc-btn" data-val="/">÷</button>
+                    <button class="calc-btn" data-val="4">4</button><button class="calc-btn" data-val="5">5</button><button class="calc-btn" data-val="6">6</button><button class="calc-btn" data-val="*">×</button>
+                    <button class="calc-btn" data-val="1">1</button><button class="calc-btn" data-val="2">2</button><button class="calc-btn" data-val="3">3</button><button class="calc-btn" data-val="-">-</button>
+                    <button class="calc-btn" data-val="0">0</button><button class="calc-btn" data-val=".">.</button><button class="calc-btn" id="calcEqual">=</button><button class="calc-btn" data-val="+">+</button>
+                    <button class="calc-btn" id="calcClear">AC</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="settings" class="screen">
-        <div class="glass-card">
-            <h3>API Configuration</h3>
-            <input type="password" id="api-key-input" placeholder="Paste Key Here..." style="width:100%; padding:12px; margin-bottom:10px; background:#0d1117; color:white; border-radius:8px;">
-            <button class="btn" onclick="window.saveKey()">SAVE SETTINGS</button>
+    <!-- AI Chat Page -->
+    <div id="chat" class="page">
+        <div class="card">
+            <h2>🤖 AI Study Assistant (Google AI)</h2>
+            <p>Ask any JAMB-related question, get explanations, and study tips!</p>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai">Hello! I'm your AI study assistant. Ask me anything about JAMB subjects, past questions, or study strategies!</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Ask me anything about JAMB...">
+                    <button id="sendChatBtn">Send</button>
+                </div>
+            </div>
         </div>
     </div>
-</main>
 
-<footer id="chat-controls">
-    <div class="input-group">
-        <input type="text" id="chat-input" placeholder="Ask a question...">
-        <button class="btn" style="width:auto; padding:0 20px;" onclick="window.sendChat()">SEND</button>
-        <button class="btn" style="width:auto; background:#ff4b2b; color:white;" onclick="window.clearChat()">×</button>
+    <!-- Settings Page -->
+    <div id="settings" class="page">
+        <div class="card">
+            <h2>⚙️ Settings</h2>
+            <div class="setting-group">
+                <label>🔑 Google AI API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="Paste your Google AI API key here">
+                <small style="color: var(--text-secondary);">Get your API key from Google AI Studio (Gemini API)</small>
+                <button id="saveApiKey" style="margin-top: 0.5rem;">Save API Key</button>
+            </div>
+            <div class="setting-group">
+                <label>🎨 Theme</label>
+                <div class="theme-toggle">
+                    <div class="theme-btn" data-theme="light">☀️ Light Mode</div>
+                    <div class="theme-btn" data-theme="dark">🌙 Dark Mode</div>
+                </div>
+            </div>
+            <div class="setting-group">
+                <label>📊 About</label>
+                <p>JAMB UltraPrep v1.0 - AI-powered mock exam platform. Features 180 questions across 6 subjects, real-time timer, calculator, and Google AI integration.</p>
+            </div>
+        </div>
     </div>
-</footer>
+</div>
 
-<script type="importmap">
-  { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
-</script>
+<script>
+    // Mock Exam State
+    let selectedSubjects = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Government'];
+    let mockQuestions = [];
+    let userAnswers = [];
+    let currentQIndex = 0;
+    let mockTimer = 7200;
+    let mockActive = false;
+    let mockInterval;
 
-<script type="module">
-    import { GoogleGenerativeAI } from "@google/generative-ai";
-
-    window.showScreen = (id) => {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active-screen');
-        document.getElementById('nav-' + id).classList.add('active');
-        
-        // Toggle footer visibility for Chat
-        if(id === 'chat') document.body.classList.add('chat-active');
-        else document.body.classList.remove('chat-active');
-        
-        document.getElementById('main-content').scrollTop = 0;
-    };
-
-    window.saveKey = () => {
-        const k = document.getElementById('api-key-input').value.trim();
-        if(k) { localStorage.setItem('jamb_key_v6', k); alert("Key Saved!"); }
-    };
-
-    async function talkToAI(prompt) {
-        const key = localStorage.getItem('jamb_key_v6');
-        if(!key) { alert("Add API Key in Settings!"); return null; }
-        try {
-            const genAI = new GoogleGenerativeAI(key);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            const result = await model.generateContent(prompt);
-            return result.response.text();
-        } catch (e) { return "ERROR"; }
+    // Calculator
+    let calcExpression = "0";
+    
+    function updateCalcScreen(screenId) {
+        const screen = document.getElementById(screenId);
+        if(screen) screen.innerText = calcExpression;
     }
 
-    window.sendChat = async () => {
-        const box = document.getElementById('chat-input');
-        const win = document.getElementById('chat-window');
-        if(!box.value) return;
-        const text = box.value;
-        win.innerHTML += `<div class="bubble user-bubble">${text}</div>`;
-        box.value = "";
+    // Initialize calculator handlers
+    function initCalculator() {
+        document.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(btn.dataset.val) {
+                    if(calcExpression === "0") calcExpression = btn.dataset.val;
+                    else calcExpression += btn.dataset.val;
+                    updateCalcScreen('mockCalcScreen');
+                }
+            });
+        });
+        document.getElementById('calcEqual')?.addEventListener('click', () => {
+            try {
+                let expr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+                let result = eval(expr);
+                calcExpression = String(result);
+                updateCalcScreen('mockCalcScreen');
+            } catch(e) { calcExpression = "Error"; updateCalcScreen('mockCalcScreen'); setTimeout(() => { calcExpression = "0"; updateCalcScreen('mockCalcScreen'); }, 1000); }
+        });
+        document.getElementById('calcClear')?.addEventListener('click', () => {
+            calcExpression = "0";
+            updateCalcScreen('mockCalcScreen');
+        });
+    }
+
+    // Generate Mock Questions
+    function generateMockQuestions() {
+        const subjectsList = selectedSubjects;
+        const questions = [];
+        const perSubject = Math.floor(180 / subjectsList.length);
+        let remaining = 180;
         
-        const response = await talkToAI("Answer as a JAMB teacher: " + text);
-        win.innerHTML += `<div class="bubble ai-bubble">${response === "ERROR" ? "Check API key!" : response}</div>`;
-        document.getElementById('main-content').scrollTop = document.getElementById('main-content').scrollHeight;
+        subjectsList.forEach(subject => {
+            let count = Math.min(perSubject, remaining);
+            if(remaining - count < subjectsList.length - 1) count = remaining;
+            for(let i = 0; i < count; i++) {
+                questions.push({
+                    id: questions.length,
+                    subject: subject,
+                    text: `${subject} Practice Question ${i+1}: ${subject === 'English' ? 'Choose the most appropriate word to complete the sentence: The boy ___ playing football.' : subject === 'Mathematics' ? `Solve: ${Math.floor(Math.random() * 20) + 5}x + ${Math.floor(Math.random() * 10)} = ${Math.floor(Math.random() * 50) + 20}` : `Based on ${subject} principles, which of the following is correct?`}`,
+                    options: ['Option A: Correct choice', 'Option B: Alternative', 'Option C: Another option', 'Option D: Final option'],
+                    correct: Math.floor(Math.random() * 4),
+                    explanation: `The correct answer is option ${String.fromCharCode(65 + (Math.floor(Math.random() * 4)))}. This is based on standard ${subject} curriculum.`
+                });
+            }
+            remaining -= count;
+        });
+        return questions;
+    }
+
+    function startMock() {
+        mockQuestions = generateMockQuestions();
+        userAnswers = new Array(180).fill(null);
+        currentQIndex = 0;
+        mockActive = true;
+        mockTimer = 7200;
+        updateMockTimerDisplay();
+        if(mockInterval) clearInterval(mockInterval);
+        mockInterval = setInterval(() => {
+            if(mockActive && mockTimer > 0) {
+                mockTimer--;
+                updateMockTimerDisplay();
+                if(mockTimer === 0) submitMock();
+            }
+        }, 1000);
+        document.getElementById('mockContent').style.display = 'block';
+        renderQuestion();
+        document.getElementById('startMockBtn').style.display = 'none';
+    }
+
+    function updateMockTimerDisplay() {
+        let hrs = Math.floor(mockTimer / 3600);
+        let mins = Math.floor((mockTimer % 3600) / 60);
+        let secs = mockTimer % 60;
+        document.getElementById('mockTimer').innerText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    }
+
+    function renderQuestion() {
+        const q = mockQuestions[currentQIndex];
+        const html = `
+            <h3>Question ${currentQIndex + 1}/180</h3>
+            <p style="background: var(--bg-secondary); padding: 1rem; border-radius: 20px; margin: 1rem 0;"><strong>${q.subject}</strong><br>${q.text}</p>
+            <div class="options-grid">
+                ${q.options.map((opt, idx) => `
+                    <div class="option-item ${userAnswers[currentQIndex] === idx ? 'selected' : ''}" onclick="selectAnswer(${idx})">
+                        ${String.fromCharCode(65+idx)}. ${opt}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('questionArea').innerHTML = html;
+    }
+
+    window.selectAnswer = (idx) => {
+        userAnswers[currentQIndex] = idx;
+        renderQuestion();
     };
 
-    window.clearChat = () => {
-        document.getElementById('chat-window').innerHTML = '<div class="bubble ai-bubble">Chat cleared! What next?</div>';
-    };
+    function submitMock() {
+        if(mockInterval) clearInterval(mockInterval);
+        mockActive = false;
+        let score = 0;
+        let results = [];
+        mockQuestions.forEach((q, idx) => {
+            const isCorrect = userAnswers[idx] === q.correct;
+            if(isCorrect) score++;
+            results.push(`
+                <div style="padding: 0.5rem; margin: 0.5rem 0; border-left: 4px solid ${isCorrect ? '#10b981' : '#ef4444'}; background: var(--bg-primary);">
+                    <strong>Q${idx+1} (${q.subject})</strong><br>
+                    ${q.text}<br>
+                    Your answer: ${userAnswers[idx] !== null ? String.fromCharCode(65+userAnswers[idx]) : 'Not answered'}<br>
+                    Correct: ${String.fromCharCode(65+q.correct)}<br>
+                    📖 ${q.explanation}
+                </div>
+            `);
+        });
+        alert(`Mock Exam Submitted!\nScore: ${score}/180 (${((score/180)*100).toFixed(1)}%)\nCheck console for detailed results.`);
+        console.log(results);
+        document.getElementById('startMockBtn').style.display = 'block';
+        document.getElementById('mockContent').style.display = 'none';
+    }
 
-    window.generateQuiz = async () => {
-        const subject = document.getElementById('subject-select').value;
-        const container = document.getElementById('quiz-container');
-        document.getElementById('gen-btn').innerText = "Loading Questions...";
+    // AI Chat with Google Gemini API
+    let apiKey = localStorage.getItem('google_api_key') || '';
+    
+    async function sendToAI(message) {
+        if(!apiKey) {
+            return "⚠️ Please add your Google AI API Key in Settings page first!";
+        }
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: message }] }]
+                })
+            });
+            const data = await response.json();
+            if(data.candidates && data.candidates[0].content.parts[0].text) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                return "AI response error. Please check your API key.";
+            }
+        } catch(e) {
+            return `Error: ${e.message}. Make sure API key is valid.`;
+        }
+    }
 
-        const prompt = `Generate 10 JAMB questions for ${subject}. Format: Question | CorrectAnswer.`;
-        const raw = await talkToAI(prompt);
-        if(raw === "ERROR") { document.getElementById('gen-btn').innerText = "Retry Generation"; return; }
+    async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if(!message) return;
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.innerHTML += `<div class="message user">${message}</div>`;
+        input.value = '';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        const aiResponse = await sendToAI(message);
+        chatMessages.innerHTML += `<div class="message ai">${aiResponse}</div>`;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        const lines = raw.split('\n').filter(l => l.includes('|'));
-        container.innerHTML = lines.map((line, i) => {
-            const [q, ans] = line.split('|');
-            const correct = ans.trim();
-            let opts = [correct, "None", "Zero", "Increases"].sort(() => Math.random() - 0.5);
-            return `<div class="q-card"><p><strong>${i+1}.</strong> ${q.trim()}</p>${opts.map(opt => `<button class="opt" onclick="window.checkAns(this, '${opt === correct}')">${opt}</button>`).join('')}</div>`;
-        }).join('');
-        document.getElementById('gen-btn').style.display = 'none';
-    };
+    // Theme switching
+    function setTheme(theme) {
+        if(theme === 'dark') document.body.classList.add('dark');
+        else document.body.classList.remove('dark');
+        localStorage.setItem('theme', theme);
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            if(btn.dataset.theme === theme) btn.classList.add('active-theme');
+            else btn.classList.remove('active-theme');
+        });
+    }
 
-    window.checkAns = (btn, isCorrect) => {
-        btn.parentElement.querySelectorAll('.opt').forEach(b => b.style.border = '1px solid #30363d');
-        btn.style.border = isCorrect === 'true' ? '2px solid #00ff88' : '2px solid #ff4b2b';
-        btn.style.background = isCorrect === 'true' ? 'rgba(0,255,136,0.1)' : 'rgba(255,75,43,0.1)';
-    };
+    // Page navigation
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+        document.getElementById(pageId).classList.add('active-page');
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            if(btn.dataset.page === pageId) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+    }
+
+    // Subject selection
+    function initSubjectSelection() {
+        document.querySelectorAll('.subject-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('selected');
+                selectedSubjects = Array.from(document.querySelectorAll('.subject-chip.selected')).map(c => c.dataset.subject);
+            });
+        });
+    }
+
+    // Event Listeners
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchPage(btn.dataset.page));
+    });
+    document.getElementById('startMockBtn')?.addEventListener('click', startMock);
+    document.getElementById('prevQuestion')?.addEventListener('click', () => { if(currentQIndex > 0) { currentQIndex--; renderQuestion(); } });
+    document.getElementById('nextQuestion')?.addEventListener('click', () => { if(currentQIndex < 179) { currentQIndex++; renderQuestion(); } });
+    document.getElementById('submitMock')?.addEventListener('click', submitMock);
+    document.getElementById('sendChatBtn')?.addEventListener('click', sendChatMessage);
+    document.getElementById('chatInput')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChatMessage(); });
+    document.getElementById('saveApiKey')?.addEventListener('click', () => {
+        apiKey = document.getElementById('apiKeyInput').value;
+        localStorage.setItem('google_api_key', apiKey);
+        alert('API Key saved! You can now use AI chat.');
+    });
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+    });
+    
+    // Load saved theme and API key
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+    if(apiKey) document.getElementById('apiKeyInput').value = apiKey;
+    initSubjectSelection();
+    initCalculator();
+    
+    // Make selectable subjects default all selected
+    document.querySelectorAll('.subject-chip').forEach(chip => chip.classList.add('selected'));
 </script>
 </body>
 </html>
