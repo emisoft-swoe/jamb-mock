@@ -33,22 +33,22 @@
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            height: 100vh;
+            min-height: 100vh;
             display: flex; 
             flex-direction: column; 
-            overflow: hidden;
-            transition: background 0.3s, color 0.3s;
+            padding-bottom: 50px;
         }
         
         nav { 
-            flex: 0 0 auto;
             background: var(--card); 
             display: flex; 
             justify-content: space-around; 
             align-items: center;
             border-bottom: 2px solid var(--prim);
+            position: sticky;
+            top: 0;
             z-index: 100;
-            padding: 10px 0;
+            padding: 12px 0;
         }
 
         nav button { 
@@ -61,18 +61,19 @@
         main {
             flex: 1;
             padding: 15px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
-        .screen { display: none; flex-direction: column; height: 100%; }
-        .active-screen { display: flex; animation: fadeIn 0.2s ease; }
+        .screen { display: none; }
+        .active-screen { display: block; animation: fadeIn 0.2s ease; }
 
         footer {
-            flex: 0 0 auto;
             background: var(--card);
             border-top: 1px solid var(--border);
             padding: 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             display: none;
             z-index: 100;
         }
@@ -101,7 +102,7 @@
         .btn-danger { background: var(--danger); color: white; }
         .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
 
-        .input-group { display: flex; gap: 8px; }
+        .input-group { display: flex; gap: 8px; flex-wrap: wrap; }
         .input-group input, .input-group select { 
             flex: 1; 
             background: var(--bg); 
@@ -112,17 +113,38 @@
             font-size: 16px;
         }
 
-        .bubble { padding: 12px; border-radius: 12px; max-width: 85%; margin-bottom: 10px; line-height: 1.4; font-size: 0.9rem; }
+        .bubble { 
+            padding: 12px; 
+            border-radius: 12px; 
+            max-width: 85%; 
+            margin-bottom: 10px; 
+            line-height: 1.4; 
+            font-size: 0.9rem; 
+            position: relative;
+        }
         .user-bubble { background: var(--accent); align-self: flex-end; margin-left: auto; color: white; }
         .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
+        .copy-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 5px;
+            padding: 2px 8px;
+            font-size: 10px;
+            cursor: pointer;
+            color: var(--text);
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
 
         .q-card { background: var(--card); border-left: 4px solid var(--prim); padding: 15px; margin-bottom: 15px; border-radius: 6px; }
         .opt { display: block; width: 100%; text-align: left; padding: 12px; margin: 8px 0; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; cursor: pointer; }
         .opt:hover { background: var(--card); }
+        .opt.selected { border: 2px solid var(--prim); background: rgba(0,255,136,0.1); }
 
-        .timer { font-size: 1.8rem; color: var(--prim); font-weight: 800; text-align: center; margin-bottom: 10px; font-family: monospace; }
-        
         .mock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .timer { font-size: 2rem; font-family: monospace; background: var(--bg); padding: 8px 20px; border-radius: 40px; font-weight: 700; }
         .calculator-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-size: 1rem; }
         
         .modal {
@@ -143,7 +165,9 @@
             border-radius: 20px;
             padding: 20px;
             width: 90%;
-            max-width: 350px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .modal-calc-screen {
             background: var(--bg);
@@ -208,15 +232,22 @@
             margin-right: 10px;
         }
         
+        .progress-badge {
+            background: var(--card);
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <nav>
-    <button onclick="window.showScreen('home')" id="nav-home" class="active">HOME</button>
-    <button onclick="window.showScreen('exam')" id="nav-exam">MOCK</button>
-    <button onclick="window.showScreen('chat')" id="nav-chat">TUTOR</button>
+    <button onclick="window.showScreen('home')" id="nav-home" class="active">🏠 HOME</button>
+    <button onclick="window.showScreen('exam')" id="nav-exam">📝 MOCK</button>
+    <button onclick="window.showScreen('chat')" id="nav-chat">🤖 TUTOR</button>
     <button onclick="window.showScreen('settings')" id="nav-settings">⚙️</button>
 </nav>
 
@@ -238,29 +269,32 @@
                 <option value="Government">Government</option>
             </select>
             <div class="input-group" style="margin-bottom:10px;">
-                <input type="number" id="num-questions" placeholder="Number of Questions" value="30" min="15" max="180">
-                <input type="number" id="exam-minutes" placeholder="Minutes" value="60" min="10" max="240">
+                <input type="number" id="num-questions" placeholder="Number of Questions" value="30" min="5" max="180">
+                <input type="number" id="exam-minutes" placeholder="Minutes" value="60" min="5" max="240">
             </div>
-            <button class="btn" onclick="window.startExamGeneration()">START EXAM</button>
+            <button class="btn" onclick="window.startExamGeneration()">🚀 START EXAM</button>
         </div>
     </div>
 
     <div id="exam" class="screen">
         <div class="mock-header">
             <div class="timer" id="exam-timer">00:00</div>
-            <button class="calculator-btn" id="show-calculator-btn">🧮 Calculator</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="calculator-btn" id="show-calculator-btn">🧮 Calc</button>
+                <div class="progress-badge" id="progress-indicator">0/0 answered</div>
+            </div>
         </div>
         <div id="exam-content">
             <div class="glass-card" style="text-align:center;">
-                <p>No questions loaded yet.</p>
+                <p>Configure your exam on the Home screen and click START EXAM.</p>
             </div>
         </div>
-        <button id="submit-exam" class="btn" style="background: var(--danger); margin-top:20px; display:none;" onclick="window.submitExam()">SUBMIT EXAM</button>
+        <button id="submit-exam" class="btn" style="background: var(--danger); margin-top:20px;" onclick="window.submitExam()">✅ SUBMIT EXAM</button>
     </div>
 
     <div id="chat" class="screen">
-        <div id="chat-window" style="display:flex; flex-direction:column;">
-            <div class="bubble ai-bubble">I am your Gemini 2.5 Flash tutor. Ask me any question!</div>
+        <div id="chat-window" style="display:flex; flex-direction:column; margin-bottom: 70px;">
+            <div class="bubble ai-bubble">I am your Gemini 2.5 Flash tutor. Ask me any JAMB question!</div>
         </div>
     </div>
 
@@ -268,7 +302,7 @@
         <div class="glass-card">
             <h3>🔑 API Settings</h3>
             <input type="password" id="api-key-input" placeholder="Paste Gemini Key Here" style="width:100%; margin-bottom:15px; background:var(--bg); color:var(--text); border:1px solid var(--border); padding:12px; border-radius:8px;">
-            <button class="btn" id="save-api-btn" onclick="window.saveKey()">SAVE KEY</button>
+            <button class="btn" id="save-api-btn" onclick="window.saveKey()">💾 SAVE KEY</button>
         </div>
         <div class="glass-card">
             <h3>🎨 Theme</h3>
@@ -278,23 +312,23 @@
             </div>
         </div>
         <div class="glass-card">
-            <h3>📊 Usage Status</h3>
-            <span id="quota-display">Model: Gemini 2.5 Flash</span>
-            <p style="font-size: 0.7rem; color: var(--warning);">Note: Free tier allows ~10-15 calls per minute.</p>
+            <h3>📊 Status</h3>
+            <span>Model: Gemini 2.5 Flash</span>
+            <p style="font-size: 0.7rem; color: var(--warning);">Free tier: ~10-15 calls per minute</p>
         </div>
     </div>
 </main>
 
 <footer id="chat-controls">
     <div class="input-group">
-        <input type="text" id="chat-input" placeholder="Ask a question...">
+        <input type="text" id="chat-input" placeholder="Ask a JAMB question...">
         <button class="btn" style="width:auto; padding:0 20px;" onclick="window.sendChat()">SEND</button>
     </div>
 </footer>
 
 <!-- Calculator Modal -->
 <div id="calculator-modal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 350px;">
         <div class="modal-calc-screen" id="modal-calc-screen">0</div>
         <div class="modal-calc-buttons">
             <button class="modal-calc-btn" data-val="7">7</button><button class="modal-calc-btn" data-val="8">8</button><button class="modal-calc-btn" data-val="9">9</button><button class="modal-calc-btn" data-val="/">÷</button>
@@ -309,9 +343,9 @@
 
 <!-- Results Modal -->
 <div id="results-modal" class="modal">
-    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-        <h3 id="results-score" style="color:var(--prim); text-align:center;"></h3>
-        <div id="results-details"></div>
+    <div class="modal-content">
+        <div id="results-score" style="text-align:center; font-size:1.5rem; margin-bottom:15px;"></div>
+        <div id="results-details" style="max-height: 50vh; overflow-y: auto;"></div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button class="btn" id="save-results-btn" onclick="window.saveResults()">💾 Save Results</button>
             <button class="btn btn-secondary" id="close-results-modal">Close</button>
@@ -336,6 +370,7 @@
     let modalCalcExpression = "0";
     let currentSubject = "";
     let currentResults = null;
+    let currentNumQuestions = 0;
 
     window.showScreen = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
@@ -345,7 +380,6 @@
         
         if (id === 'chat') document.body.classList.add('chat-active');
         else document.body.classList.remove('chat-active');
-        document.getElementById('main-content').scrollTop = 0;
         
         if (id === 'home') loadSavedExams();
     };
@@ -383,41 +417,62 @@
         if(!input.value) return;
         
         const msg = input.value;
-        win.innerHTML += `<div class="bubble user-bubble">${msg}</div>`;
+        win.innerHTML += `<div class="bubble user-bubble">${escapeHtml(msg)}</div>`;
         input.value = "";
         
         const response = await callAI("Answer as a JAMB teacher concisely: " + msg);
-        win.innerHTML += `<div class="bubble ai-bubble">${response === "ERROR" ? "Error: Check API Key or Internet." : response}</div>`;
+        const responseText = response === "ERROR" ? "Error: Check API Key or Internet." : response;
+        win.innerHTML += `<div class="bubble ai-bubble">${escapeHtml(responseText)}<button class="copy-btn" onclick="window.copyText(this)">📋 Copy</button></div>`;
         document.getElementById('main-content').scrollTop = document.getElementById('main-content').scrollHeight;
     };
+    
+    window.copyText = (btn) => {
+        const bubble = btn.parentElement;
+        const text = bubble.innerText.replace('📋 Copy', '').trim();
+        navigator.clipboard.writeText(text);
+        btn.innerText = '✓ Copied!';
+        setTimeout(() => btn.innerText = '📋 Copy', 2000);
+    };
+    
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
 
     window.startExamGeneration = async () => {
         const subject = document.getElementById('subject-select').value;
         let numQuestions = parseInt(document.getElementById('num-questions').value);
         const minutes = parseInt(document.getElementById('exam-minutes').value);
         
-        if(isNaN(numQuestions) || numQuestions < 15) numQuestions = 30;
+        if(isNaN(numQuestions) || numQuestions < 5) numQuestions = 30;
         if(numQuestions > 180) numQuestions = 180;
-        if(isNaN(minutes) || minutes < 10) minutes = 60;
+        if(isNaN(minutes) || minutes < 5) minutes = 60;
         
+        currentNumQuestions = numQuestions;
         currentSubject = subject;
         
         const content = document.getElementById('exam-content');
-        content.innerHTML = `<div class="glass-card">Generating ${numQuestions} ${subject} questions...</div>`;
+        content.innerHTML = `<div class="glass-card">⏳ Generating ${numQuestions} ${subject} questions...<br><small>This may take a moment</small></div>`;
         window.showScreen('exam');
 
-        const prompt = `Generate ${numQuestions} JAMB multiple-choice questions for ${subject}. 
-        For each question, format exactly like this (one per line, use "|||" as separator):
-        Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3
+        const prompt = `Generate exactly ${numQuestions} JAMB multiple-choice questions for ${subject}. 
         
-        Also provide a brief explanation for each question after the options, format: Explanation: your explanation
+        For EACH question, format EXACTLY like this (use "|||" as separator, one question per line):
+        Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3 ||| Brief explanation
         
-        Make questions realistic for JAMB/WAEC level.`;
+        Example:
+        What is the capital of Nigeria? ||| Abuja ||| Lagos ||| Kano ||| Ibadan ||| Abuja was designated as capital in 1991.
+        
+        Generate ${numQuestions} unique, realistic JAMB/WAEC-level questions. Return ONLY the formatted questions, no extra text.`;
         
         const raw = await callAI(prompt);
 
         if(raw === "ERROR") {
-            content.innerHTML = `<div class="glass-card">Failed to load. Check API key.</div>`;
+            content.innerHTML = `<div class="glass-card">❌ Failed to load. Check API key and try again.</div>`;
             return;
         }
 
@@ -425,12 +480,14 @@
         const lines = raw.split('\n').filter(l => l.includes('|||'));
         currentQuestions = [];
         
-        for(let i = 0; i < lines.length; i++) {
+        for(let i = 0; i < Math.min(lines.length, numQuestions); i++) {
             const parts = lines[i].split('|||').map(p => p.trim());
-            if(parts.length >= 4) {
+            if(parts.length >= 5) {
                 const questionText = parts[0];
                 const correctAnswer = parts[1];
-                const wrongOptions = parts.slice(2, 5);
+                const wrongOptions = [parts[2], parts[3], parts[4]];
+                const explanation = parts.length > 5 ? parts[5] : `The correct answer is "${correctAnswer}".`;
+                
                 const allOptions = [correctAnswer, ...wrongOptions];
                 // Shuffle options
                 for(let j = allOptions.length - 1; j > 0; j--) {
@@ -438,16 +495,6 @@
                     [allOptions[j], allOptions[k]] = [allOptions[k], allOptions[j]];
                 }
                 const correctIndex = allOptions.findIndex(opt => opt === correctAnswer);
-                
-                // Look for explanation in next lines
-                let explanation = `The correct answer is "${correctAnswer}".`;
-                const nextLines = raw.split('\n');
-                for(let j = i; j < Math.min(i+3, nextLines.length); j++) {
-                    if(nextLines[j].includes('Explanation:')) {
-                        explanation = nextLines[j].replace('Explanation:', '').trim();
-                        break;
-                    }
-                }
                 
                 currentQuestions.push({
                     text: questionText,
@@ -460,7 +507,7 @@
         }
         
         if(currentQuestions.length === 0) {
-            content.innerHTML = `<div class="glass-card">Failed to parse questions. Please try again.</div>`;
+            content.innerHTML = `<div class="glass-card">❌ Failed to parse questions. Please try again.<br><small>Raw response: ${raw.substring(0, 200)}</small></div>`;
             return;
         }
         
@@ -484,7 +531,7 @@
                 if(examTimer === 0) {
                     clearInterval(timerInterval);
                     examActive = false;
-                    alert("Time's up! Submitting exam automatically.");
+                    alert("⏰ Time's up! Submitting exam automatically.");
                     submitExam();
                 }
             }
@@ -496,6 +543,11 @@
         const secs = examTimer % 60;
         document.getElementById('exam-timer').innerHTML = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
     }
+    
+    function updateProgress() {
+        const answered = userAnswers.filter(a => a !== null).length;
+        document.getElementById('progress-indicator').innerHTML = `${answered}/${currentQuestions.length} answered`;
+    }
 
     function renderQuestions() {
         const content = document.getElementById('exam-content');
@@ -503,10 +555,11 @@
             <div class="q-card" data-qid="${i}">
                 <p><b>${i+1}.</b> ${q.text}</p>
                 ${q.options.map((opt, idx) => `
-                    <button class="opt" data-optidx="${idx}" onclick="window.selectAnswer(${i}, ${idx})" style="${userAnswers[i] === idx ? 'border:2px solid var(--prim);' : ''}">${String.fromCharCode(65+idx)}. ${opt}</button>
+                    <button class="opt ${userAnswers[i] === idx ? 'selected' : ''}" data-optidx="${idx}" onclick="window.selectAnswer(${i}, ${idx})">${String.fromCharCode(65+idx)}. ${opt}</button>
                 `).join('')}
             </div>
         `).join('');
+        updateProgress();
     }
     
     window.selectAnswer = (qIndex, optIndex) => {
@@ -555,9 +608,9 @@
             <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
                 <strong>Q${r.number}</strong><br>
                 ${r.question}<br>
-                <span style="color: ${r.isCorrect ? 'var(--prim)' : 'var(--danger)'}">Your answer: ${r.selectedAnswer}</span><br>
+                <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${r.selectedAnswer}</span><br>
                 ✅ Correct: ${r.correctAnswer}<br>
-                💡 Explanation: ${r.explanation}
+                💡 ${r.explanation}
             </div>
         `).join('');
         
@@ -572,7 +625,7 @@
         savedExams = savedExams ? JSON.parse(savedExams) : [];
         savedExams.unshift(currentResults);
         localStorage.setItem('jamb_saved_exams', JSON.stringify(savedExams));
-        alert("Results saved successfully!");
+        alert("✅ Results saved successfully!");
         document.getElementById('results-modal').classList.remove('active');
         loadSavedExams();
     };
@@ -607,19 +660,18 @@
         savedExams = savedExams ? JSON.parse(savedExams) : [];
         const exam = savedExams[idx];
         
-        let detailsHtml = `<h3>${exam.subject} - ${exam.date}</h3>`;
-        detailsHtml += `<div style="text-align:center; margin:15px 0; font-size:1.5rem; color:var(--prim);">Score: ${exam.score}/${exam.total} (${exam.percent}%)</div>`;
-        detailsHtml += exam.results.map(r => `
+        document.getElementById('results-score').innerHTML = `📊 ${exam.subject} - ${exam.date}<br>Score: ${exam.score}/${exam.total} (${exam.percent}%)`;
+        
+        const detailsHtml = exam.results.map(r => `
             <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
                 <strong>Q${r.number}</strong><br>
                 ${r.question}<br>
-                <span style="color: ${r.isCorrect ? 'var(--prim)' : 'var(--danger)'}">Your answer: ${r.selectedAnswer}</span><br>
+                <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${r.selectedAnswer}</span><br>
                 ✅ Correct: ${r.correctAnswer}<br>
-                💡 Explanation: ${r.explanation}
+                💡 ${r.explanation}
             </div>
         `).join('');
         
-        document.getElementById('results-score').innerHTML = `📊 Saved Exam Results`;
         document.getElementById('results-details').innerHTML = detailsHtml;
         document.getElementById('results-modal').classList.add('active');
     };
@@ -667,6 +719,7 @@
     
     if(apiKey) document.getElementById('api-key-input').value = apiKey;
     loadSavedExams();
+    updateModalCalcScreen();
 </script>
 </body>
 </html>
