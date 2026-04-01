@@ -145,7 +145,28 @@
 
         .mock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .timer { font-size: 2rem; font-family: monospace; background: var(--bg); padding: 8px 20px; border-radius: 40px; font-weight: 700; }
-        .calculator-btn { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; font-size: 1rem; }
+        
+        /* Floating Calculator Button */
+        .floating-calc {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.2s;
+            border: none;
+        }
+        .floating-calc:hover { transform: scale(1.1); }
         
         .modal {
             display: none;
@@ -155,7 +176,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.8);
-            z-index: 1000;
+            z-index: 1001;
             justify-content: center;
             align-items: center;
         }
@@ -239,6 +260,31 @@
             font-size: 0.9rem;
         }
         
+        .difficulty-bar {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .difficulty-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .difficulty-btn.active {
+            background: var(--prim);
+            color: #0d1117;
+            border-color: var(--prim);
+        }
+        
+        .jamb-simulation {
+            background: linear-gradient(135deg, var(--card), var(--bg));
+            border: 2px solid var(--prim);
+        }
+        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -251,15 +297,68 @@
     <button onclick="window.showScreen('settings')" id="nav-settings">⚙️</button>
 </nav>
 
+<!-- Floating Calculator Button -->
+<button class="floating-calc" id="floating-calc-btn">🧮</button>
+
 <main id="main-content">
     <div id="home" class="screen active-screen">
-        <div class="glass-card" style="text-align:center;">
-            <h1 style="color:var(--prim); margin:0 0 10px 0;">JAMB 2026</h1>
-            <p>Saved Exam Results</p>
+        <!-- REAL JAMB SIMULATION BLOCK -->
+        <div class="glass-card jamb-simulation" style="text-align:center;">
+            <h2 style="color:var(--prim); margin:0 0 10px 0;">🎯 REAL JAMB SIMULATION</h2>
+            <p>Full JAMB Examination: English (60) + 3 Subjects (40 each) = 180 Questions | 2 Hours</p>
+            <div style="margin: 15px 0;">
+                <label style="display:block; margin-bottom:5px;">Select Your 3 Additional Subjects:</label>
+                <div class="input-group" style="margin-bottom:10px;">
+                    <select id="jamb-subj1" style="flex:1;">
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Government">Government</option>
+                        <option value="Economics">Economics</option>
+                        <option value="Literature">Literature</option>
+                        <option value="CRS">CRS</option>
+                    </select>
+                    <select id="jamb-subj2" style="flex:1;">
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Government">Government</option>
+                        <option value="Economics">Economics</option>
+                        <option value="Literature">Literature</option>
+                        <option value="CRS">CRS</option>
+                    </select>
+                    <select id="jamb-subj3" style="flex:1;">
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Government">Government</option>
+                        <option value="Economics">Economics</option>
+                        <option value="Literature">Literature</option>
+                        <option value="CRS">CRS</option>
+                    </select>
+                </div>
+            </div>
+            <div class="difficulty-bar" id="jamb-difficulty-bar">
+                <div class="difficulty-btn" data-diff="Easy">📘 Easy</div>
+                <div class="difficulty-btn active" data-diff="Intermediate">📚 Intermediate</div>
+                <div class="difficulty-btn" data-diff="Advanced">🎓 Advanced</div>
+            </div>
+            <button class="btn" onclick="window.startJambSimulation()">🎯 START JAMB SIMULATION</button>
+        </div>
+        
+        <!-- Saved Results Block -->
+        <div class="glass-card">
+            <h3>📁 Saved Exam Results</h3>
             <div id="saved-exams-list"></div>
         </div>
+        
+        <!-- Custom Practice Block -->
         <div class="glass-card" style="text-align:center;">
-            <p>Start a New Practice:</p>
+            <h3>📝 Custom Practice</h3>
+            <p>Choose subject, topic, and number of questions</p>
             <select id="subject-select" style="width:100%; padding:12px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; margin-bottom:10px;">
                 <option value="English">English Language</option>
                 <option value="Mathematics">Mathematics</option>
@@ -268,25 +367,28 @@
                 <option value="Biology">Biology</option>
                 <option value="Government">Government</option>
             </select>
+            <input type="text" id="custom-topic" placeholder="Specific topic (e.g., Trigonometry, Shakespeare, Organic Chemistry)" style="width:100%; padding:12px; margin-bottom:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text);">
             <div class="input-group" style="margin-bottom:10px;">
                 <input type="number" id="num-questions" placeholder="Number of Questions" value="30" min="5" max="180">
                 <input type="number" id="exam-minutes" placeholder="Minutes" value="60" min="5" max="240">
             </div>
-            <button class="btn" onclick="window.startExamGeneration()">🚀 START EXAM</button>
+            <div class="difficulty-bar" id="custom-difficulty-bar">
+                <div class="difficulty-btn" data-diff="Easy">📘 Easy</div>
+                <div class="difficulty-btn active" data-diff="Intermediate">📚 Intermediate</div>
+                <div class="difficulty-btn" data-diff="Advanced">🎓 Advanced</div>
+            </div>
+            <button class="btn" onclick="window.startCustomExam()">🚀 START PRACTICE</button>
         </div>
     </div>
 
     <div id="exam" class="screen">
         <div class="mock-header">
             <div class="timer" id="exam-timer">00:00</div>
-            <div style="display: flex; gap: 10px;">
-                <button class="calculator-btn" id="show-calculator-btn">🧮 Calc</button>
-                <div class="progress-badge" id="progress-indicator">0/0 answered</div>
-            </div>
+            <div class="progress-badge" id="progress-indicator">0/0 answered</div>
         </div>
         <div id="exam-content">
             <div class="glass-card" style="text-align:center;">
-                <p>Configure your exam on the Home screen and click START EXAM.</p>
+                <p>Configure your exam on the Home screen and click START.</p>
             </div>
         </div>
         <button id="submit-exam" class="btn" style="background: var(--danger); margin-top:20px;" onclick="window.submitExam()">✅ SUBMIT EXAM</button>
@@ -371,6 +473,7 @@
     let currentSubject = "";
     let currentResults = null;
     let currentNumQuestions = 0;
+    let currentDifficulty = "Intermediate";
 
     window.showScreen = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
@@ -383,6 +486,149 @@
         
         if (id === 'home') loadSavedExams();
     };
+
+    // Difficulty setup
+    function setupDifficultyBars() {
+        document.querySelectorAll('#jamb-difficulty-bar .difficulty-btn, #custom-difficulty-bar .difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const parent = btn.parentElement;
+                parent.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if(parent.id === 'jamb-difficulty-bar') {
+                    currentDifficulty = btn.dataset.diff;
+                }
+            });
+        });
+    }
+    
+    window.startJambSimulation = async () => {
+        const subj1 = document.getElementById('jamb-subj1').value;
+        const subj2 = document.getElementById('jamb-subj2').value;
+        const subj3 = document.getElementById('jamb-subj3').value;
+        const difficulty = document.querySelector('#jamb-difficulty-bar .difficulty-btn.active')?.dataset.diff || "Intermediate";
+        
+        const subjects = ['English', subj1, subj2, subj3];
+        const questionsPerSubject = [60, 40, 40, 40];
+        
+        currentSubject = `JAMB Simulation: ${subjects.join(', ')}`;
+        currentNumQuestions = 180;
+        
+        const content = document.getElementById('exam-content');
+        content.innerHTML = `<div class="glass-card">⏳ Generating 180 JAMB questions...<br><small>This may take 30-60 seconds</small></div>`;
+        window.showScreen('exam');
+        
+        let allQuestions = [];
+        
+        for(let i = 0; i < subjects.length; i++) {
+            const subject = subjects[i];
+            const count = questionsPerSubject[i];
+            const prompt = `Generate exactly ${count} JAMB multiple-choice questions for ${subject} at ${difficulty} difficulty level.
+            
+            For EACH question, format EXACTLY like this (use "|||" as separator, one question per line):
+            Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3 ||| Brief explanation
+            
+            Make questions realistic for JAMB/WAEC level. Return ONLY the formatted questions.`;
+            
+            const raw = await callAI(prompt);
+            if(raw === "ERROR") {
+                content.innerHTML = `<div class="glass-card">❌ Failed to generate ${subject} questions. Please try again.</div>`;
+                return;
+            }
+            
+            const parsed = parseQuestions(raw, subject);
+            allQuestions.push(...parsed);
+            content.innerHTML = `<div class="glass-card">✅ Generated ${subject} questions... (${allQuestions.length}/180)</div>`;
+        }
+        
+        if(allQuestions.length >= 150) {
+            currentQuestions = allQuestions.slice(0, 180);
+            userAnswers = new Array(currentQuestions.length).fill(null);
+            renderQuestions();
+            startTimer(7200); // 2 hours
+            document.getElementById('submit-exam').style.display = 'block';
+        } else {
+            content.innerHTML = `<div class="glass-card">❌ Failed to generate enough questions. Got ${allQuestions.length}/180.</div>`;
+        }
+    };
+    
+    window.startCustomExam = async () => {
+        const subject = document.getElementById('subject-select').value;
+        let numQuestions = parseInt(document.getElementById('num-questions').value);
+        const minutes = parseInt(document.getElementById('exam-minutes').value);
+        const topic = document.getElementById('custom-topic').value.trim();
+        const difficulty = document.querySelector('#custom-difficulty-bar .difficulty-btn.active')?.dataset.diff || "Intermediate";
+        
+        if(isNaN(numQuestions) || numQuestions < 5) numQuestions = 30;
+        if(numQuestions > 180) numQuestions = 180;
+        if(isNaN(minutes) || minutes < 5) minutes = 60;
+        
+        currentNumQuestions = numQuestions;
+        currentSubject = `${subject} - ${topic || "General"} (${difficulty})`;
+        
+        const content = document.getElementById('exam-content');
+        content.innerHTML = `<div class="glass-card">⏳ Generating ${numQuestions} ${subject} questions on "${topic || "General"}"...</div>`;
+        window.showScreen('exam');
+
+        let topicText = topic ? ` focusing on the topic: ${topic}` : '';
+        const prompt = `Generate exactly ${numQuestions} JAMB multiple-choice questions for ${subject}${topicText} at ${difficulty} difficulty level.
+        
+        For EACH question, format EXACTLY like this (use "|||" as separator, one question per line):
+        Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3 ||| Brief explanation
+        
+        Make questions realistic for JAMB/WAEC level. Return ONLY the formatted questions.`;
+        
+        const raw = await callAI(prompt);
+
+        if(raw === "ERROR") {
+            content.innerHTML = `<div class="glass-card">❌ Failed to load. Check API key and try again.</div>`;
+            return;
+        }
+
+        currentQuestions = parseQuestions(raw, subject);
+        
+        if(currentQuestions.length === 0) {
+            content.innerHTML = `<div class="glass-card">❌ Failed to parse questions. Please try again.</div>`;
+            return;
+        }
+        
+        currentQuestions = currentQuestions.slice(0, numQuestions);
+        userAnswers = new Array(currentQuestions.length).fill(null);
+        renderQuestions();
+        startTimer(minutes * 60);
+        document.getElementById('submit-exam').style.display = 'block';
+    };
+    
+    function parseQuestions(raw, subject) {
+        const lines = raw.split('\n').filter(l => l.includes('|||'));
+        const questions = [];
+        
+        for(let i = 0; i < lines.length; i++) {
+            const parts = lines[i].split('|||').map(p => p.trim());
+            if(parts.length >= 5) {
+                const questionText = parts[0];
+                const correctAnswer = parts[1];
+                const wrongOptions = [parts[2], parts[3], parts[4]];
+                const explanation = parts.length > 5 ? parts[5] : `The correct answer is "${correctAnswer}".`;
+                
+                const allOptions = [correctAnswer, ...wrongOptions];
+                for(let j = allOptions.length - 1; j > 0; j--) {
+                    const k = Math.floor(Math.random() * (j + 1));
+                    [allOptions[j], allOptions[k]] = [allOptions[k], allOptions[j]];
+                }
+                const correctIndex = allOptions.findIndex(opt => opt === correctAnswer);
+                
+                questions.push({
+                    text: questionText,
+                    correctAnswer: correctAnswer,
+                    correctIndex: correctIndex,
+                    options: allOptions,
+                    explanation: explanation,
+                    subject: subject
+                });
+            }
+        }
+        return questions;
+    }
 
     window.saveKey = () => {
         const val = document.getElementById('api-key-input').value.trim();
@@ -442,81 +688,6 @@
             return m;
         });
     }
-
-    window.startExamGeneration = async () => {
-        const subject = document.getElementById('subject-select').value;
-        let numQuestions = parseInt(document.getElementById('num-questions').value);
-        const minutes = parseInt(document.getElementById('exam-minutes').value);
-        
-        if(isNaN(numQuestions) || numQuestions < 5) numQuestions = 30;
-        if(numQuestions > 180) numQuestions = 180;
-        if(isNaN(minutes) || minutes < 5) minutes = 60;
-        
-        currentNumQuestions = numQuestions;
-        currentSubject = subject;
-        
-        const content = document.getElementById('exam-content');
-        content.innerHTML = `<div class="glass-card">⏳ Generating ${numQuestions} ${subject} questions...<br><small>This may take a moment</small></div>`;
-        window.showScreen('exam');
-
-        const prompt = `Generate exactly ${numQuestions} JAMB multiple-choice questions for ${subject}. 
-        
-        For EACH question, format EXACTLY like this (use "|||" as separator, one question per line):
-        Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3 ||| Brief explanation
-        
-        Example:
-        What is the capital of Nigeria? ||| Abuja ||| Lagos ||| Kano ||| Ibadan ||| Abuja was designated as capital in 1991.
-        
-        Generate ${numQuestions} unique, realistic JAMB/WAEC-level questions. Return ONLY the formatted questions, no extra text.`;
-        
-        const raw = await callAI(prompt);
-
-        if(raw === "ERROR") {
-            content.innerHTML = `<div class="glass-card">❌ Failed to load. Check API key and try again.</div>`;
-            return;
-        }
-
-        // Parse questions
-        const lines = raw.split('\n').filter(l => l.includes('|||'));
-        currentQuestions = [];
-        
-        for(let i = 0; i < Math.min(lines.length, numQuestions); i++) {
-            const parts = lines[i].split('|||').map(p => p.trim());
-            if(parts.length >= 5) {
-                const questionText = parts[0];
-                const correctAnswer = parts[1];
-                const wrongOptions = [parts[2], parts[3], parts[4]];
-                const explanation = parts.length > 5 ? parts[5] : `The correct answer is "${correctAnswer}".`;
-                
-                const allOptions = [correctAnswer, ...wrongOptions];
-                // Shuffle options
-                for(let j = allOptions.length - 1; j > 0; j--) {
-                    const k = Math.floor(Math.random() * (j + 1));
-                    [allOptions[j], allOptions[k]] = [allOptions[k], allOptions[j]];
-                }
-                const correctIndex = allOptions.findIndex(opt => opt === correctAnswer);
-                
-                currentQuestions.push({
-                    text: questionText,
-                    correctAnswer: correctAnswer,
-                    correctIndex: correctIndex,
-                    options: allOptions,
-                    explanation: explanation
-                });
-            }
-        }
-        
-        if(currentQuestions.length === 0) {
-            content.innerHTML = `<div class="glass-card">❌ Failed to parse questions. Please try again.<br><small>Raw response: ${raw.substring(0, 200)}</small></div>`;
-            return;
-        }
-        
-        currentQuestions = currentQuestions.slice(0, numQuestions);
-        userAnswers = new Array(currentQuestions.length).fill(null);
-        renderQuestions();
-        startTimer(minutes * 60);
-        document.getElementById('submit-exam').style.display = 'block';
-    };
     
     function startTimer(seconds) {
         if(timerInterval) clearInterval(timerInterval);
@@ -597,9 +768,7 @@
             score: score,
             total: currentQuestions.length,
             percent: percent,
-            results: results,
-            questions: currentQuestions,
-            userAnswers: userAnswers
+            results: results
         };
         
         document.getElementById('results-score').innerHTML = `📊 Score: ${score}/${currentQuestions.length} (${percent}%)`;
@@ -660,7 +829,7 @@
         savedExams = savedExams ? JSON.parse(savedExams) : [];
         const exam = savedExams[idx];
         
-        document.getElementById('results-score').innerHTML = `📊 ${exam.subject} - ${exam.date}<br>Score: ${exam.score}/${exam.total} (${exam.percent}%)`;
+        document.getElementById('results-score').innerHTML = `📊 ${exam.subject}<br>${exam.date}<br>Score: ${exam.score}/${exam.total} (${exam.percent}%)`;
         
         const detailsHtml = exam.results.map(r => `
             <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
@@ -689,7 +858,7 @@
     // Calculator Modal
     function updateModalCalcScreen() { document.getElementById('modal-calc-screen').innerText = modalCalcExpression; }
     
-    document.getElementById('show-calculator-btn')?.addEventListener('click', () => {
+    document.getElementById('floating-calc-btn')?.addEventListener('click', () => {
         document.getElementById('calculator-modal').classList.add('active');
     });
     document.getElementById('close-calculator')?.addEventListener('click', () => {
@@ -720,6 +889,7 @@
     if(apiKey) document.getElementById('api-key-input').value = apiKey;
     loadSavedExams();
     updateModalCalcScreen();
+    setupDifficultyBars();
 </script>
 </body>
 </html>
