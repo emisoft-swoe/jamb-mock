@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>JAMB AI ELITE | 2026</title>
     <style>
         :root {
@@ -22,29 +22,26 @@
             background: var(--bg); 
             color: var(--text); 
             margin: 0; 
-            min-height: 100vh;
+            height: 100vh;
             display: flex; 
             flex-direction: column; 
+            overflow: hidden;
         }
         
-        body { padding-bottom: 70px; }
-
         nav { 
+            flex: 0 0 auto;
             background: var(--card); 
             display: flex; 
             justify-content: space-around; 
             align-items: center;
             border-bottom: 2px solid var(--prim);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            padding: 12px 0;
+            z-index: 100;
+            padding: 10px 0;
         }
 
         nav button { 
             background: none; border: none; color: #8b949e; 
-            font-weight: bold; cursor: pointer; padding: 8px 12px; font-size: 0.9rem;
-            transition: 0.2s;
+            font-weight: bold; cursor: pointer; padding: 10px; font-size: 0.85rem;
         }
 
         nav button.active { color: var(--prim); border-bottom: 2px solid var(--prim); }
@@ -52,21 +49,20 @@
         main {
             flex: 1;
             padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .screen { display: none; }
-        .active-screen { display: block; animation: fadeIn 0.2s ease; }
+        .screen { display: none; flex-direction: column; height: 100%; }
+        .active-screen { display: flex; animation: fadeIn 0.2s ease; }
 
         footer {
+            flex: 0 0 auto;
             background: var(--card);
             border-top: 1px solid var(--border);
             padding: 10px;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
             display: none;
-            z-index: 20;
+            z-index: 100;
         }
 
         .chat-active footer { display: block; }
@@ -78,22 +74,18 @@
             padding: 15px; 
             margin-bottom: 15px; 
         }
+        
         .btn { 
             background: var(--prim); 
             color: #0d1117; 
             border: none; 
-            padding: 12px; 
+            padding: 14px; 
             border-radius: 8px; 
             font-weight: 800; 
             cursor: pointer; 
             width: 100%;
-            transition: 0.1s;
         }
-        .btn:active { transform: scale(0.98); }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-secondary { background: #30363d; color: white; }
-        .btn-warning { background: var(--warning); color: #0d1117; }
-        
+
         .input-group { display: flex; gap: 8px; }
         .input-group input { 
             flex: 1; 
@@ -105,370 +97,79 @@
             font-size: 16px;
         }
 
-        .bubble { 
-            padding: 12px; 
-            border-radius: 12px; 
-            max-width: 85%; 
-            margin-bottom: 10px; 
-            line-height: 1.4; 
-            font-size: 0.9rem; 
-        }
-        .user-bubble { background: var(--accent); align-self: flex-end; margin-left: auto; }
+        .bubble { padding: 12px; border-radius: 12px; max-width: 85%; margin-bottom: 10px; line-height: 1.4; font-size: 0.9rem; }
+        .user-bubble { background: var(--accent); align-self: flex-end; margin-left: auto; color: white; }
         .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
-        .error-bubble { background: rgba(255,75,43,0.2); align-self: flex-start; border-left: 3px solid var(--danger); color: var(--danger); }
 
-        .q-card { 
-            background: #0d1117; 
-            border-left: 4px solid var(--prim); 
-            padding: 12px; 
-            margin-bottom: 15px; 
-            border-radius: 6px; 
-        }
-        .opt { 
-            display: block; 
-            width: 100%; 
-            text-align: left; 
-            padding: 10px; 
-            margin: 5px 0; 
-            background: #21262d; 
-            border: 1px solid var(--border); 
-            color: white; 
-            border-radius: 6px; 
-            cursor: pointer;
-            transition: 0.05s;
-        }
-        .opt:active { transform: scale(0.99); }
-        .opt.selected { border: 2px solid var(--prim); background: rgba(0,255,136,0.1); }
+        .q-card { background: #0d1117; border-left: 4px solid var(--prim); padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        .opt { display: block; width: 100%; text-align: left; padding: 12px; margin: 8px 0; background: #21262d; border: 1px solid var(--border); color: white; border-radius: 6px; }
 
-        .mock-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .timer {
-            font-size: 2rem;
-            font-family: monospace;
-            background: #0d1117;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            letter-spacing: 2px;
-        }
-        .calculator-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 40px;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .progress-badge {
-            background: var(--card);
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-        }
+        .timer { font-size: 1.5rem; color: var(--prim); font-weight: 800; text-align: center; margin-bottom: 10px; }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 20px;
-            width: 90%;
-            max-width: 350px;
-            border: 1px solid var(--border);
-        }
-        .modal-calc-screen {
-            background: #0d1117;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 1.8rem;
-            text-align: right;
-            font-family: monospace;
-            margin-bottom: 15px;
-        }
-        .modal-calc-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
-        .modal-calc-btn {
-            background: #21262d;
-            border: 1px solid var(--border);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: white;
-        }
-        .close-modal { margin-top: 15px; background: var(--danger); width: 100%; }
-
-        .results-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1001;
-            overflow-y: auto;
-            padding: 20px;
-        }
-        .results-modal.active { display: flex; justify-content: center; align-items: center; }
-        .results-content {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 800px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .score-card {
-            text-align: center;
-            background: var(--prim);
-            color: #0d1117;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-        .result-item {
-            border-left: 3px solid;
-            padding: 12px;
-            margin-bottom: 12px;
-            background: #0d1117;
-            border-radius: 8px;
-        }
-        .result-correct { border-left-color: var(--prim); }
-        .result-wrong { border-left-color: var(--danger); }
-
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .nav-buttons button { flex: 1; }
-
-        .debug-console {
-            background: #0d1117;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 15px;
-            font-family: monospace;
-            font-size: 0.7rem;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .debug-log {
-            border-top: 1px solid #30363d;
-            padding: 4px 0;
-            color: #8b949e;
-        }
-        .debug-log.error { color: var(--danger); }
-        .debug-log.success { color: var(--prim); }
-        .debug-log.warning { color: var(--warning); }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.6s linear infinite;
-            margin-right: 8px;
-        }
-
-        .subject-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .chip {
-            background: #21262d;
-            padding: 8px 16px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid var(--border);
-        }
-        .chip.selected {
-            background: var(--prim);
-            color: #0d1117;
-            border-color: var(--prim);
-        }
-
-        .error-message {
-            background: rgba(255,75,43,0.1);
-            border: 1px solid var(--danger);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 10px 0;
-            color: var(--danger);
-        }
-
-        .quota-badge {
-            background: var(--warning);
-            color: #0d1117;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: bold;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        @media (max-width: 600px) {
-            .timer { font-size: 1.2rem; padding: 5px 12px; }
-            .calculator-btn { padding: 6px 12px; font-size: 0.8rem; }
-        }
     </style>
 </head>
 <body>
 
 <nav>
-    <button onclick="window.showScreen('home')" id="nav-home" class="active">🏠 HOME</button>
-    <button onclick="window.showScreen('exam')" id="nav-exam">📝 MOCK</button>
-    <button onclick="window.showScreen('chat')" id="nav-chat">🤖 TUTOR</button>
+    <button onclick="window.showScreen('home')" id="nav-home" class="active">HOME</button>
+    <button onclick="window.showScreen('exam')" id="nav-exam">MOCK</button>
+    <button onclick="window.showScreen('chat')" id="nav-chat">TUTOR</button>
     <button onclick="window.showScreen('settings')" id="nav-settings">⚙️</button>
 </nav>
 
 <main id="main-content">
-    <!-- HOME SCREEN -->
     <div id="home" class="screen active-screen">
         <div class="glass-card" style="text-align:center;">
             <h1 style="color:var(--prim); margin:0 0 10px 0;">JAMB 2026</h1>
-            <p>AI-powered mock exams with efficient batch generation</p>
-            <div class="subject-chips" id="subject-chips">
-                <div class="chip selected" data-subj="English">English</div>
-                <div class="chip selected" data-subj="Mathematics">Mathematics</div>
-                <div class="chip selected" data-subj="Physics">Physics</div>
-                <div class="chip selected" data-subj="Chemistry">Chemistry</div>
-                <div class="chip selected" data-subj="Biology">Biology</div>
-                <div class="chip selected" data-subj="Government">Government</div>
-            </div>
-            <button class="btn" onclick="window.startExamGeneration()">📚 GENERATE MOCK EXAM</button>
+            <p>Select Subject for Practice:</p>
+            <select id="subject-select" style="width:100%; padding:12px; background:#0d1117; color:white; border:1px solid var(--border); border-radius:8px; margin-bottom:15px;">
+                <option value="English">English Language</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Biology">Biology</option>
+            </select>
+            <button class="btn" onclick="window.startExamGeneration()">START EXAM</button>
         </div>
     </div>
 
-    <!-- EXAM SCREEN -->
     <div id="exam" class="screen">
-        <div class="mock-header">
-            <div class="timer" id="exam-timer">02:00:00</div>
-            <div style="display: flex; gap: 10px;">
-                <button class="calculator-btn" id="show-calculator-btn">🧮 Calculator</button>
-                <div class="progress-badge" id="progress-indicator">0/0 answered</div>
-            </div>
-        </div>
-        
+        <div class="timer" id="exam-timer">120:00</div>
         <div id="exam-content">
-            <div id="question-area">
-                <div class="glass-card" style="text-align:center;">
-                    <p>Click "Generate Mock Exam" on the Home screen to start.</p>
-                </div>
+            <div class="glass-card" style="text-align:center;">
+                <p>No questions loaded yet.</p>
             </div>
-            <div class="nav-buttons" style="display: none;" id="nav-buttons">
-                <button id="prev-q">◀ Previous</button>
-                <button id="next-q">Next ▶</button>
-            </div>
-            <button id="submit-exam" class="btn" style="background: var(--danger); display: none;">✅ Submit Exam & View Results</button>
         </div>
-        
-        <div class="debug-console" id="exam-debug">
-            <div style="display: flex; justify-content: space-between;">
-                <strong>🐛 API Debug Log</strong>
-                <button id="clear-exam-debug" style="background: none; border: none; color: var(--prim); cursor: pointer;">Clear</button>
-            </div>
-            <div id="exam-debug-logs">Ready. Generate exam to start.</div>
-        </div>
+        <button id="submit-exam" class="btn" style="background: var(--danger); margin-top:20px; display:none;" onclick="window.submitExam()">SUBMIT EXAM</button>
     </div>
 
-    <!-- CHAT SCREEN -->
     <div id="chat" class="screen">
-        <div id="chat-window" style="display:flex; flex-direction:column; margin-bottom: 10px;">
-            <div class="bubble ai-bubble">Hello! I'm your JAMB AI tutor. Ask me anything about your subjects or exam strategies.</div>
-        </div>
-        <div class="debug-console" id="chat-debug">
-            <div style="display: flex; justify-content: space-between;">
-                <strong>🐛 Chat Debug Log</strong>
-                <button id="clear-chat-debug" style="background: none; border: none; color: var(--prim); cursor: pointer;">Clear</button>
-            </div>
-            <div id="chat-debug-logs">Ready for chat interactions...</div>
+        <div id="chat-window" style="display:flex; flex-direction:column;">
+            <div class="bubble ai-bubble">I am your Gemini 2.5 Flash tutor. Ask me any question!</div>
         </div>
     </div>
 
-    <!-- SETTINGS SCREEN -->
     <div id="settings" class="screen">
         <div class="glass-card">
-            <h3>🔑 Gemini API Key</h3>
-            <input type="password" id="api-key-input" placeholder="Paste your API key here" style="width:100%; padding:12px; margin-bottom:10px; background:#0d1117; color:white; border-radius:8px;">
-            <button class="btn" id="save-api-btn">SAVE KEY</button>
-            <div style="margin-top: 15px; padding: 10px; background: #0d1117; border-radius: 8px;">
-                <strong>📊 Daily API Usage</strong><br>
-                <span id="quota-display">Calls used: -- / 20</span>
-                <button id="reset-quota-btn" style="margin-top: 8px; background: var(--warning); font-size: 0.8rem; padding: 5px;">Reset Counter (New Day)</button>
+            <h3>🔑 API Settings</h3>
+            <input type="password" id="api-key-input" placeholder="Paste Gemini Key Here" style="width:100%; margin-bottom:15px;">
+            <button class="btn" id="save-api-btn" onclick="window.saveKey()">SAVE KEY</button>
+            <div style="margin-top: 20px; padding: 10px; background: #0d1117; border-radius: 8px;">
+                <strong>📊 Usage Status</strong><br>
+                <span id="quota-display">Model: Gemini 2.5 Flash</span>
+                <p style="font-size: 0.7rem; color: var(--warning);">Note: Free tier allows ~10-15 calls per minute.</p>
             </div>
-            <p style="font-size:0.7rem; margin-top:10px;">Get your key from <a href="https://aistudio.google.com/" target="_blank" style="color:var(--prim);">Google AI Studio</a></p>
-            <p style="font-size:0.7rem; color: var(--warning);">⚡ Each full exam uses 6 API calls (30 questions per subject). Chat uses 1 call per message.</p>
-            <p style="font-size:0.7rem;">Model: <strong>gemini-1.5-flash</strong></p>
         </div>
     </div>
 </main>
 
 <footer id="chat-controls">
     <div class="input-group">
-        <input type="text" id="chat-input" placeholder="Ask a JAMB question...">
-        <button class="btn" style="width:auto; padding:0 20px;" id="send-chat-btn">SEND</button>
-        <button class="btn" style="width:auto; background:#ff4b2b; color:white;" id="clear-chat-btn">×</button>
+        <input type="text" id="chat-input" placeholder="Ask a question...">
+        <button class="btn" style="width:auto; padding:0 20px;" onclick="window.sendChat()">SEND</button>
     </div>
 </footer>
-
-<!-- Calculator Modal -->
-<div id="calculator-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-calc-screen" id="modal-calc-screen">0</div>
-        <div class="modal-calc-buttons">
-            <button class="modal-calc-btn" data-val="7">7</button><button class="modal-calc-btn" data-val="8">8</button><button class="modal-calc-btn" data-val="9">9</button><button class="modal-calc-btn" data-val="/">÷</button>
-            <button class="modal-calc-btn" data-val="4">4</button><button class="modal-calc-btn" data-val="5">5</button><button class="modal-calc-btn" data-val="6">6</button><button class="modal-calc-btn" data-val="*">×</button>
-            <button class="modal-calc-btn" data-val="1">1</button><button class="modal-calc-btn" data-val="2">2</button><button class="modal-calc-btn" data-val="3">3</button><button class="modal-calc-btn" data-val="-">-</button>
-            <button class="modal-calc-btn" data-val="0">0</button><button class="modal-calc-btn" data-val=".">.</button><button class="modal-calc-btn" id="modal-calc-equal">=</button><button class="modal-calc-btn" data-val="+">+</button>
-            <button class="modal-calc-btn" id="modal-calc-clear">AC</button>
-        </div>
-        <button class="btn close-modal" id="close-calculator">Close</button>
-    </div>
-</div>
-
-<!-- Results Modal -->
-<div id="results-modal" class="results-modal">
-    <div class="results-content">
-        <div id="results-score" class="score-card"></div>
-        <div id="results-details"></div>
-        <button class="btn" id="close-results">Close Results</button>
-    </div>
-</div>
 
 <script type="importmap">
     { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
@@ -477,409 +178,105 @@
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // ---------- GLOBAL ----------
-    let apiKey = localStorage.getItem('jamb_api_key') || '';
-    let selectedSubjects = [];
+    let apiKey = localStorage.getItem('jamb_key_2026') || '';
+    const GEMINI_MODEL = "gemini-2.5-flash"; // UPDATED MODEL
     let currentQuestions = [];
     let userAnswers = [];
-    let currentQIndex = 0;
-    let examTimer = 7200;
-    let timerInterval = null;
-    let examActive = false;
-    let modalCalcExpression = "0";
-    let examGenerated = false;
-    
-    // Quota tracking (daily limit = 20)
-    let apiCallsToday = parseInt(localStorage.getItem('api_calls_today') || '0');
-    let lastResetDate = localStorage.getItem('last_reset_date') || '';
-    
-    const GEMINI_MODEL = "gemini-1.5-flash";
-    const DAILY_LIMIT = 20;
-    
-    function checkAndResetQuota() {
-        const today = new Date().toDateString();
-        if (lastResetDate !== today) {
-            apiCallsToday = 0;
-            localStorage.setItem('api_calls_today', '0');
-            localStorage.setItem('last_reset_date', today);
-            updateQuotaDisplay();
-            addDebugLog('exam-debug-logs', '📅 Daily quota reset for new day', 'success');
-        }
-    }
-    
-    function updateQuotaDisplay() {
-        const display = document.getElementById('quota-display');
-        if (display) {
-            display.innerHTML = `Calls used: ${apiCallsToday} / ${DAILY_LIMIT}<br>
-            <span style="font-size: 0.7rem;">Remaining: ${DAILY_LIMIT - apiCallsToday}</span>`;
-        }
-    }
-    
-    function canMakeAPICall() {
-        checkAndResetQuota();
-        if (apiCallsToday >= DAILY_LIMIT) {
-            addDebugLog('exam-debug-logs', `❌ Daily quota exceeded (${DAILY_LIMIT}/${DAILY_LIMIT})`, 'error');
-            return false;
-        }
-        return true;
-    }
-    
-    function incrementQuota() {
-        apiCallsToday++;
-        localStorage.setItem('api_calls_today', apiCallsToday);
-        updateQuotaDisplay();
-    }
-    
-    // Debug logging
-    function addDebugLog(containerId, message, type = 'info') {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        const time = new Date().toLocaleTimeString();
-        const logDiv = document.createElement('div');
-        logDiv.className = `debug-log ${type}`;
-        logDiv.innerHTML = `[${time}] ${message}`;
-        container.appendChild(logDiv);
-        container.scrollTop = container.scrollHeight;
-        while (container.children.length > 100) container.removeChild(container.firstChild);
-    }
 
-    // Generate 30 questions for a subject in ONE API call
-    async function generateSubjectQuestions(subject, count = 30) {
-        if (!canMakeAPICall()) {
-            throw new Error(`QUOTA_EXCEEDED: Daily limit of ${DAILY_LIMIT} API calls reached. Please try again tomorrow.`);
-        }
-        
-        addDebugLog('exam-debug-logs', `📤 Generating ${count} ${subject} questions (1 API call)...`, 'info');
-        
-        const prompt = `Generate ${count} JAMB (Nigerian) multiple-choice questions for ${subject}.
-        
-        Format your response EXACTLY like this (each question on new line, use "|||" as separator):
-        1. Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3
-        2. Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3
-        ...
-        ${count}. Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3
-        
-        Make questions realistic for JAMB/WAEC level. Return ONLY the formatted questions, no extra text.`;
-        
-        try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-            const result = await model.generateContent(prompt);
-            const responseText = result.response.text();
-            incrementQuota();
-            addDebugLog('exam-debug-logs', `✅ Received ${count} questions for ${subject}`, 'success');
-            return parseBatchQuestions(responseText, subject);
-        } catch (e) {
-            addDebugLog('exam-debug-logs', `❌ Error: ${e.message}`, 'error');
-            throw e;
-        }
-    }
-    
-    function parseBatchQuestions(text, subject) {
-        const lines = text.split('\n').filter(line => line.includes('|||'));
-        const questions = [];
-        
-        for (let i = 0; i < lines.length; i++) {
-            const parts = lines[i].split('|||').map(p => p.replace(/^\d+\.\s*/, '').trim());
-            if (parts.length >= 4) {
-                const questionText = parts[0];
-                const correctAnswer = parts[1];
-                const wrongOptions = parts.slice(2, 5);
-                
-                while (wrongOptions.length < 3) wrongOptions.push(`Distractor ${wrongOptions.length + 1}`);
-                
-                let allOptions = [correctAnswer, ...wrongOptions.slice(0, 3)];
-                for (let j = allOptions.length - 1; j > 0; j--) {
-                    const k = Math.floor(Math.random() * (j + 1));
-                    [allOptions[j], allOptions[k]] = [allOptions[k], allOptions[j]];
-                }
-                const correctIndex = allOptions.findIndex(opt => opt === correctAnswer);
-                
-                questions.push({
-                    subject: subject,
-                    text: questionText,
-                    options: allOptions,
-                    correct: correctIndex,
-                    explanation: `The correct answer is "${correctAnswer}". This is based on standard ${subject} curriculum.`
-                });
-            }
-        }
-        
-        if (questions.length === 0) {
-            throw new Error(`Failed to parse questions for ${subject}. Response: ${text.substring(0, 200)}`);
-        }
-        
-        return questions;
-    }
-    
-    // Generate full exam (6 API calls)
-    window.startExamGeneration = async function() {
-        selectedSubjects = Array.from(document.querySelectorAll('#subject-chips .chip.selected')).map(c => c.dataset.subj);
-        if (selectedSubjects.length === 0) {
-            alert('Please select at least one subject.');
-            return;
-        }
-        
-        if (!apiKey) {
-            alert('Please add your Gemini API key in Settings first.');
-            window.showScreen('settings');
-            return;
-        }
-        
-        if (!canMakeAPICall()) {
-            alert(`Daily API limit (${DAILY_LIMIT}) reached. Please try again tomorrow.`);
-            return;
-        }
-        
-        const totalNeeded = 180;
-        const perSubject = Math.floor(totalNeeded / selectedSubjects.length);
-        let remaining = totalNeeded;
-        
-        currentQuestions = [];
-        const generateBtn = document.querySelector('#home .btn');
-        generateBtn.disabled = true;
-        generateBtn.innerHTML = '<span class="loading-spinner"></span> Generating 180 questions...';
-        
-        try {
-            for (let i = 0; i < selectedSubjects.length; i++) {
-                const subject = selectedSubjects[i];
-                let count = perSubject;
-                if (i === selectedSubjects.length - 1) count = remaining;
-                
-                if (!canMakeAPICall()) {
-                    throw new Error(`Quota exceeded. Generated ${currentQuestions.length} questions before limit.`);
-                }
-                
-                const questions = await generateSubjectQuestions(subject, Math.min(count, 30));
-                currentQuestions.push(...questions.slice(0, count));
-                remaining -= count;
-                
-                addDebugLog('exam-debug-logs', `📚 ${subject}: ${questions.length} questions added`, 'success');
-            }
-            
-            if (currentQuestions.length >= 150) {
-                currentQuestions = currentQuestions.slice(0, 180);
-                startExam();
-                addDebugLog('exam-debug-logs', `✅ Exam ready! ${currentQuestions.length} questions loaded.`, 'success');
-            } else {
-                throw new Error(`Only generated ${currentQuestions.length} questions.`);
-            }
-        } catch (error) {
-            alert(`Generation error: ${error.message}`);
-            addDebugLog('exam-debug-logs', `❌ Failed: ${error.message}`, 'error');
-        } finally {
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '📚 GENERATE MOCK EXAM';
-        }
-    };
-    
-    function startExam() {
-        examGenerated = true;
-        userAnswers = new Array(currentQuestions.length).fill(null);
-        currentQIndex = 0;
-        examActive = true;
-        examTimer = 7200;
-        
-        updateTimerDisplay();
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-            if (examActive && examTimer > 0) {
-                examTimer--;
-                updateTimerDisplay();
-                if (examTimer === 0) submitExam();
-            }
-        }, 1000);
-        
-        document.getElementById('nav-buttons').style.display = 'flex';
-        document.getElementById('submit-exam').style.display = 'block';
-        renderQuestion();
-        updateProgress();
-        window.showScreen('exam');
-        addDebugLog('exam-debug-logs', `🚀 Exam started with ${currentQuestions.length} questions`, 'success');
-    }
-    
-    function renderQuestion() {
-        if (!currentQuestions.length) return;
-        const q = currentQuestions[currentQIndex];
-        const userAnswer = userAnswers[currentQIndex];
-        const area = document.getElementById('question-area');
-        area.innerHTML = `
-            <div class="q-card">
-                <p><strong>Question ${currentQIndex + 1}/${currentQuestions.length}</strong><br>
-                <span style="color: var(--prim);">📖 ${q.subject}</span></p>
-                <p style="margin: 15px 0; font-size: 1.1rem;">${q.text}</p>
-                ${q.options.map((opt, idx) => `
-                    <button class="opt ${userAnswer === idx ? 'selected' : ''}" 
-                            onclick="window.selectAnswer(${idx})">${String.fromCharCode(65+idx)}. ${opt}</button>
-                `).join('')}
-            </div>
-        `;
-    }
-    
-    window.selectAnswer = (idx) => {
-        userAnswers[currentQIndex] = idx;
-        renderQuestion();
-        updateProgress();
-    };
-    
-    function updateProgress() {
-        const answered = userAnswers.filter(a => a !== null).length;
-        document.getElementById('progress-indicator').innerHTML = `${answered}/${currentQuestions.length} answered`;
-    }
-    
-    function updateTimerDisplay() {
-        let hrs = Math.floor(examTimer / 3600);
-        let mins = Math.floor((examTimer % 3600) / 60);
-        let secs = examTimer % 60;
-        document.getElementById('exam-timer').innerText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
-    }
-    
-    async function nextQuestion() { if (currentQIndex < currentQuestions.length - 1) { currentQIndex++; renderQuestion(); } }
-    async function prevQuestion() { if (currentQIndex > 0) { currentQIndex--; renderQuestion(); } }
-    
-    function submitExam() {
-        if (timerInterval) clearInterval(timerInterval);
-        examActive = false;
-        
-        let score = 0;
-        const results = [];
-        for (let i = 0; i < currentQuestions.length; i++) {
-            const q = currentQuestions[i];
-            const isCorrect = userAnswers[i] === q.correct;
-            if (isCorrect) score++;
-            results.push({
-                number: i + 1,
-                subject: q.subject,
-                question: q.text,
-                userAnswer: userAnswers[i] !== null ? q.options[userAnswers[i]] : "Not answered",
-                correctAnswer: q.options[q.correct],
-                explanation: q.explanation,
-                isCorrect
-            });
-        }
-        
-        const percent = ((score / currentQuestions.length) * 100).toFixed(1);
-        document.getElementById('results-score').innerHTML = `
-            <h2>📊 Your Score</h2>
-            <div style="font-size: 3rem; font-weight: 800;">${score}/${currentQuestions.length}</div>
-            <div style="font-size: 1.2rem;">${percent}%</div>
-        `;
-        
-        const detailsHtml = results.map(r => `
-            <div class="result-item ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
-                <strong>Q${r.number} (${r.subject})</strong><br>
-                ${r.question}<br>
-                <span style="color: ${r.isCorrect ? 'var(--prim)' : 'var(--danger)'}">
-                    Your answer: ${r.userAnswer}
-                </span><br>
-                ✅ Correct: ${r.correctAnswer}<br>
-                💡 ${r.explanation}
-            </div>
-        `).join('');
-        
-        document.getElementById('results-details').innerHTML = detailsHtml;
-        document.getElementById('results-modal').classList.add('active');
-        addDebugLog('exam-debug-logs', `📊 Final Score: ${score}/${currentQuestions.length} (${percent}%)`, 'success');
-    }
-    
-    // ---------- CHAT ----------
-    async function sendChat() {
-        const input = document.getElementById('chat-input');
-        const msg = input.value.trim();
-        if (!msg) return;
-        if (!canMakeAPICall()) {
-            alert(`Daily API limit (${DAILY_LIMIT}) reached. Cannot send message.`);
-            return;
-        }
-        
-        const chatWin = document.getElementById('chat-window');
-        chatWin.innerHTML += `<div class="bubble user-bubble">${escapeHtml(msg)}</div>`;
-        input.value = '';
-        chatWin.scrollTop = chatWin.scrollHeight;
-        
-        addDebugLog('chat-debug-logs', `📤 User: ${msg.substring(0, 50)}...`, 'info');
-        
-        try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-            const result = await model.generateContent(`You are a JAMB tutor. Answer concisely: ${msg}`);
-            incrementQuota();
-            chatWin.innerHTML += `<div class="bubble ai-bubble">${escapeHtml(result.response.text())}</div>`;
-            addDebugLog('chat-debug-logs', `✅ Response sent`, 'success');
-        } catch (error) {
-            chatWin.innerHTML += `<div class="bubble error-bubble">⚠️ Error: ${error.message}</div>`;
-            addDebugLog('chat-debug-logs', `❌ Error: ${error.message}`, 'error');
-        }
-        chatWin.scrollTop = chatWin.scrollHeight;
-    }
-    
-    function clearChat() { document.getElementById('chat-window').innerHTML = '<div class="bubble ai-bubble">Chat cleared! How can I help?</div>'; }
-    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
-    
-    // ---------- MODAL CALCULATOR ----------
-    function updateModalCalcScreen() { document.getElementById('modal-calc-screen').innerText = modalCalcExpression; }
-    
-    // ---------- INITIALIZATION ----------
     window.showScreen = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById(id).classList.add('active-screen');
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
         document.getElementById(`nav-${id}`).classList.add('active');
+        
         if (id === 'chat') document.body.classList.add('chat-active');
         else document.body.classList.remove('chat-active');
+        document.getElementById('main-content').scrollTop = 0;
     };
-    
-    document.getElementById('prev-q')?.addEventListener('click', prevQuestion);
-    document.getElementById('next-q')?.addEventListener('click', nextQuestion);
-    document.getElementById('submit-exam')?.addEventListener('click', submitExam);
-    document.getElementById('save-api-btn')?.addEventListener('click', () => {
-        const key = document.getElementById('api-key-input').value.trim();
-        if (key) { apiKey = key; localStorage.setItem('jamb_api_key', key); alert('API Key saved!'); }
-    });
-    document.getElementById('send-chat-btn')?.addEventListener('click', sendChat);
-    document.getElementById('clear-chat-btn')?.addEventListener('click', clearChat);
-    document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
-    document.getElementById('clear-exam-debug')?.addEventListener('click', () => { document.getElementById('exam-debug-logs').innerHTML = ''; });
-    document.getElementById('clear-chat-debug')?.addEventListener('click', () => { document.getElementById('chat-debug-logs').innerHTML = ''; });
-    document.getElementById('close-results')?.addEventListener('click', () => { document.getElementById('results-modal').classList.remove('active'); });
-    document.getElementById('reset-quota-btn')?.addEventListener('click', () => {
-        apiCallsToday = 0;
-        localStorage.setItem('api_calls_today', '0');
-        localStorage.setItem('last_reset_date', new Date().toDateString());
-        updateQuotaDisplay();
-        addDebugLog('exam-debug-logs', '🔄 Quota counter manually reset', 'warning');
-        alert('Quota counter reset. Use this only if a new day has started.');
-    });
-    
-    // Calculator modal
-    const modal = document.getElementById('calculator-modal');
-    document.getElementById('show-calculator-btn')?.addEventListener('click', () => modal.classList.add('active'));
-    document.getElementById('close-calculator')?.addEventListener('click', () => modal.classList.remove('active'));
-    
-    document.querySelectorAll('.modal-calc-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (btn.dataset.val) {
-                if (modalCalcExpression === "0") modalCalcExpression = btn.dataset.val;
-                else modalCalcExpression += btn.dataset.val;
-                updateModalCalcScreen();
-            }
-        });
-    });
-    document.getElementById('modal-calc-equal')?.addEventListener('click', () => {
+
+    window.saveKey = () => {
+        const val = document.getElementById('api-key-input').value.trim();
+        if(val) { apiKey = val; localStorage.setItem('jamb_key_2026', val); alert("API Key Saved!"); }
+    };
+
+    async function callAI(prompt) {
+        if (!apiKey) { alert("Please set API Key in Settings!"); return null; }
         try {
-            let expr = modalCalcExpression.replace(/×/g, '*').replace(/÷/g, '/');
-            modalCalcExpression = String(eval(expr));
-            updateModalCalcScreen();
-        } catch(e) { modalCalcExpression = "Error"; updateModalCalcScreen(); setTimeout(() => { modalCalcExpression = "0"; updateModalCalcScreen(); }, 1000); }
-    });
-    document.getElementById('modal-calc-clear')?.addEventListener('click', () => { modalCalcExpression = "0"; updateModalCalcScreen(); });
-    
-    document.querySelectorAll('.chip').forEach(chip => { chip.addEventListener('click', () => chip.classList.toggle('selected')); });
-    if (apiKey) document.getElementById('api-key-input').value = apiKey;
-    updateModalCalcScreen();
-    checkAndResetQuota();
-    updateQuotaDisplay();
-    addDebugLog('exam-debug-logs', `✅ Ready. Model: ${GEMINI_MODEL}. Daily quota: ${apiCallsToday}/${DAILY_LIMIT} used.`, 'success');
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+            const result = await model.generateContent(prompt);
+            return result.response.text();
+        } catch (e) {
+            console.error(e);
+            return "ERROR";
+        }
+    }
+
+    window.sendChat = async () => {
+        const input = document.getElementById('chat-input');
+        const win = document.getElementById('chat-window');
+        if(!input.value) return;
+        
+        const msg = input.value;
+        win.innerHTML += `<div class="bubble user-bubble">${msg}</div>`;
+        input.value = "";
+        
+        const response = await callAI("Answer as a JAMB teacher: " + msg);
+        win.innerHTML += `<div class="bubble ai-bubble">${response === "ERROR" ? "Error: Check API Key or Internet." : response}</div>`;
+        document.getElementById('main-content').scrollTop = document.getElementById('main-content').scrollHeight;
+    };
+
+    window.startExamGeneration = async () => {
+        const sub = document.getElementById('subject-select').value;
+        const content = document.getElementById('exam-content');
+        content.innerHTML = `<div class="glass-card">Generating 10 ${sub} questions...</div>`;
+        window.showScreen('exam');
+
+        const prompt = `Generate 10 JAMB questions for ${sub}. Format: Question | Correct Answer | Wrong 1 | Wrong 2 | Wrong 3.`;
+        const raw = await callAI(prompt);
+
+        if(raw === "ERROR") {
+            content.innerHTML = `<div class="glass-card">Failed to load. Check API key.</div>`;
+            return;
+        }
+
+        const lines = raw.split('\n').filter(l => l.includes('|'));
+        currentQuestions = lines.map(line => {
+            const parts = line.split('|').map(p => p.trim());
+            const q = parts[0];
+            const correct = parts[1];
+            const options = parts.slice(1).sort(() => Math.random() - 0.5);
+            return { q, correct, options };
+        });
+
+        renderQuestions();
+        document.getElementById('submit-exam').style.display = 'block';
+    };
+
+    function renderQuestions() {
+        const content = document.getElementById('exam-content');
+        content.innerHTML = currentQuestions.map((q, i) => `
+            <div class="q-card">
+                <p><b>${i+1}.</b> ${q.q}</p>
+                ${q.options.map(opt => `
+                    <button class="opt" onclick="window.handleAnswer(this, '${opt}', '${q.correct}')">${opt}</button>
+                `).join('')}
+            </div>
+        `).join('');
+    }
+
+    window.handleAnswer = (btn, selected, correct) => {
+        const parent = btn.parentElement;
+        parent.querySelectorAll('.opt').forEach(b => b.style.border = '1px solid var(--border)');
+        btn.style.border = selected === correct ? '2px solid var(--prim)' : '2px solid var(--danger)';
+    };
+
+    window.submitExam = () => {
+        alert("Exam submitted! Check your highlighted answers for accuracy.");
+        window.showScreen('home');
+    };
+
+    if(apiKey) document.getElementById('api-key-input').value = apiKey;
 </script>
 </body>
 </html>
