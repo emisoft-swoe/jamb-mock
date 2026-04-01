@@ -2,849 +2,633 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>JAMB UltraPrep AI | AI-Generated Mock Questions</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JAMB AI ELITE | 2026</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
-        }
-
-        /* Theme Variables */
         :root {
-            --bg-primary: #f0f7ff;
-            --bg-secondary: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --accent: #3b82f6;
-            --accent-dark: #2563eb;
-            --accent-glow: rgba(59,130,246,0.3);
-            --card-bg: rgba(255,255,255,0.95);
-            --border: #e2e8f0;
-            --nav-bg: rgba(255,255,255,0.98);
-            --shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
-            --calculator-bg: #f1f5f9;
-            --option-hover: #f8fafc;
-            --debug-bg: #fef9e3;
-            --debug-text: #92400e;
+            --bg: #0a0c10;
+            --card: #161b22;
+            --prim: #00ff88;
+            --accent: #58a6ff;
+            --text: #f0f6fc;
+            --danger: #ff4b2b;
+            --border: #30363d;
         }
-
-        body.dark {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --accent: #60a5fa;
-            --accent-dark: #3b82f6;
-            --accent-glow: rgba(96,165,250,0.3);
-            --card-bg: rgba(30,41,59,0.95);
-            --border: #334155;
-            --nav-bg: rgba(15,23,42,0.98);
-            --shadow: 0 20px 35px -12px rgba(0,0,0,0.5);
-            --calculator-bg: #0f172a;
-            --option-hover: #334155;
-            --debug-bg: #1e293b;
-            --debug-text: #fde047;
-        }
-
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-            min-height: 100vh;
-            overflow-x: hidden;
+        
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        
+        html, body { 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
         }
 
         /* Navigation */
-        .navbar {
-            background: var(--nav-bg);
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
+        nav { 
+            flex: 0 0 60px; 
+            background: var(--card); 
+            display: flex; 
+            justify-content: space-around; 
             align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--prim);
+            z-index: 10;
         }
 
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent), #8b5cf6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: pulse 2s infinite;
+        nav button { 
+            background: none; border: none; color: #8b949e; 
+            font-weight: bold; cursor: pointer; padding: 10px; font-size: 0.9rem;
+            transition: 0.2s;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
+        nav button.active { color: var(--prim); border-bottom: 2px solid var(--prim); }
 
-        .nav-btn {
-            padding: 0.7rem 1.5rem;
-            background: transparent;
-            border: none;
-            color: var(--text-primary);
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 40px;
-            transition: all 0.3s;
-            font-size: 1rem;
-        }
-
-        .nav-btn.active {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 0 15px var(--accent-glow);
-        }
-
-        .nav-btn:hover:not(.active) {
-            background: var(--accent);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-            animation: fadeInUp 0.5s ease;
-        }
-
-        .page {
-            display: none;
-            animation: fadeIn 0.4s ease;
-        }
-
-        .page.active-page {
-            display: block;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(5px);
-            border-radius: 32px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            transition: transform 0.3s, box-shadow 0.3s;
-            margin-bottom: 1.5rem;
-        }
-
-        .card:hover {
-            transform: translateY(-3px);
-        }
-
-        /* Debug Console */
-        .debug-console {
-            background: var(--debug-bg);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 1rem;
-            margin-top: 1.5rem;
-            max-height: 300px;
+        /* Main scrollable area */
+        main {
+            flex: 1; 
             overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.8rem;
-        }
-
-        .debug-console h4 {
-            color: var(--debug-text);
-            margin-bottom: 0.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .debug-log {
-            color: var(--debug-text);
-            border-top: 1px solid var(--border);
-            padding: 0.5rem 0;
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .debug-log.error {
-            color: #ef4444;
-        }
-
-        .debug-log.success {
-            color: #10b981;
-        }
-
-        /* Subject Selector */
-        .subject-selector {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
-
-        .subject-chip {
-            padding: 0.6rem 1.2rem;
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            border-radius: 40px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .subject-chip.selected {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-        }
-
-        /* Timer */
-        .timer {
-            font-size: 2rem;
-            font-weight: 700;
-            font-family: monospace;
-            background: var(--bg-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 40px;
-            display: inline-block;
-        }
-
-        /* Question Area */
-        .question-area {
-            margin-top: 1.5rem;
-        }
-
-        .options-grid {
+            -webkit-overflow-scrolling: touch;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin: 1.5rem 0;
         }
 
-        .option-item {
-            background: var(--bg-secondary);
-            padding: 1rem;
-            border-radius: 60px;
+        .screen { display: none; width: 100%; flex-direction: column; }
+        .active-screen { display: flex; animation: fadeIn 0.2s ease; }
+
+        /* Footer (only visible on chat) */
+        footer {
+            flex: 0 0 auto;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 10px;
+            display: none;
+        }
+
+        .chat-active footer { display: block; }
+
+        /* UI Components */
+        .glass-card { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+        }
+        .btn { 
+            background: var(--prim); 
+            color: #0d1117; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            width: 100%;
+            transition: 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        .input-group { display: flex; gap: 8px; }
+        .input-group input { 
+            flex: 1; 
+            background: #0d1117; 
+            border: 1px solid var(--border); 
+            color: white; 
+            padding: 12px; 
+            border-radius: 8px; 
+            font-size: 16px;
+        }
+
+        /* Chat bubbles */
+        .bubble { 
+            padding: 12px; 
+            border-radius: 12px; 
+            max-width: 85%; 
+            margin-bottom: 10px; 
+            line-height: 1.4; 
+            font-size: 0.9rem; 
+        }
+        .user-bubble { background: var(--accent); align-self: flex-end; }
+        .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
+
+        /* Quiz elements */
+        .q-card { 
+            background: #0d1117; 
+            border-left: 4px solid var(--prim); 
+            padding: 12px; 
+            margin-bottom: 15px; 
+            border-radius: 6px; 
+        }
+        .opt { 
+            display: block; 
+            width: 100%; 
+            text-align: left; 
+            padding: 10px; 
+            margin: 5px 0; 
+            background: #21262d; 
+            border: 1px solid var(--border); 
+            color: white; 
+            border-radius: 6px; 
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--border);
+            transition: 0.05s;
         }
+        .opt:active { transform: scale(0.99); }
+        .opt.correct-highlight { border: 2px solid var(--prim); background: rgba(0,255,136,0.1); }
+        .opt.wrong-highlight { border: 2px solid var(--danger); background: rgba(255,75,43,0.1); }
 
-        .option-item:hover {
-            background: var(--option-hover);
-            transform: translateX(5px);
+        /* Timer and calculator */
+        .timer { 
+            font-size: 1.8rem; 
+            font-family: monospace; 
+            background: #0d1117; 
+            padding: 5px 15px; 
+            border-radius: 40px; 
+            display: inline-block; 
+            margin-bottom: 10px;
         }
-
-        .option-item.selected {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
+        .calc-widget {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 15px 0;
         }
-
-        /* Calculator */
-        .calculator-widget {
-            background: var(--calculator-bg);
-            border-radius: 28px;
-            padding: 1rem;
-            margin-top: 1.5rem;
-        }
-
         .calc-screen {
-            background: var(--bg-primary);
-            padding: 1rem;
-            border-radius: 20px;
-            font-size: 1.8rem;
+            background: #0d1117;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1.5rem;
             text-align: right;
             font-family: monospace;
-            margin-bottom: 1rem;
+            margin-bottom: 10px;
         }
-
         .calc-buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 0.8rem;
+            gap: 8px;
         }
-
         .calc-btn {
-            padding: 0.8rem;
-            border: none;
-            background: var(--bg-secondary);
-            border-radius: 20px;
+            background: #21262d;
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
             font-size: 1.2rem;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.1s;
+            color: white;
         }
+        .calc-btn:active { background: #30363d; }
 
-        .calc-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* AI Chat */
-        .chat-container {
-            height: 450px;
+        /* Subject chips */
+        .subject-chips {
             display: flex;
-            flex-direction: column;
-            background: var(--bg-secondary);
-            border-radius: 28px;
-            overflow: hidden;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .chip {
+            background: #21262d;
+            padding: 8px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid var(--border);
+        }
+        .chip.selected {
+            background: var(--prim);
+            color: #0d1117;
+            border-color: var(--prim);
         }
 
-        .chat-messages {
-            flex: 1;
+        /* Navigation buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .nav-buttons button { flex: 1; }
+
+        /* Debug console */
+        .debug-console {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.7rem;
+            max-height: 150px;
             overflow-y: auto;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
         }
+        .debug-log {
+            border-top: 1px solid #30363d;
+            padding: 4px 0;
+            color: #8b949e;
+        }
+        .debug-log.error { color: var(--danger); }
+        .debug-log.success { color: var(--prim); }
 
-        .message {
-            max-width: 80%;
-            padding: 0.8rem 1.2rem;
-            border-radius: 20px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .message.user {
-            background: var(--accent);
-            color: white;
-            align-self: flex-end;
-        }
-
-        .message.ai {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            align-self: flex-start;
-        }
-
-        .chat-input-area {
-            display: flex;
-            padding: 1rem;
-            gap: 1rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 0.8rem;
-            border: 1px solid var(--border);
-            border-radius: 40px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-        }
-
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px var(--accent-glow);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                padding: 1rem;
-            }
-            .message {
-                max-width: 95%;
-            }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<nav class="navbar">
-    <div class="logo">📚 JAMB UltraPrep AI</div>
-    <div class="nav-links">
-        <button class="nav-btn active" data-page="home">🏠 Home</button>
-        <button class="nav-btn" data-page="mock">📝 Mock Exam</button>
-        <button class="nav-btn" data-page="chat">🤖 AI Chat</button>
-        <button class="nav-btn" data-page="settings">⚙️ Settings</button>
-    </div>
+<nav>
+    <button onclick="window.showScreen('home')" id="nav-home" class="active">🏠 HOME</button>
+    <button onclick="window.showScreen('exam')" id="nav-exam">📝 MOCK</button>
+    <button onclick="window.showScreen('chat')" id="nav-chat">🤖 TUTOR</button>
+    <button onclick="window.showScreen('settings')" id="nav-settings">⚙️</button>
 </nav>
 
-<div class="container">
-    <!-- Home Page -->
-    <div id="home" class="page active-page">
-        <div class="card">
-            <h1 style="font-size: 2.5rem; background: linear-gradient(135deg, var(--accent), #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent;">Welcome to JAMB UltraPrep</h1>
-            <p style="font-size: 1.2rem; margin-top: 0.5rem;">AI-powered mock exams with dynamically generated questions using Google AI!</p>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
-                <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 20px;">📝 <strong>AI-Generated Questions</strong><br>Questions created on-the-fly by Gemini AI</div>
-                <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 20px;">🎯 <strong>Subject Selection</strong><br>Choose your JAMB subjects</div>
-                <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 20px;">🧮 <strong>Built-in Calculator</strong><br>Quick calculations during exam</div>
-                <div style="text-align: center; padding: 1rem; background: var(--bg-secondary); border-radius: 20px;">🐛 <strong>Debug Console</strong><br>See all AI interactions</div>
+<main id="main-content">
+    <!-- HOME SCREEN -->
+    <div id="home" class="screen active-screen">
+        <div class="glass-card" style="text-align:center;">
+            <h1 style="color:var(--prim); margin:0 0 10px 0;">JAMB 2026</h1>
+            <p>AI-powered mock exams with real-time feedback</p>
+            <div class="subject-chips" id="subject-chips">
+                <div class="chip selected" data-subj="English">English</div>
+                <div class="chip selected" data-subj="Mathematics">Mathematics</div>
+                <div class="chip selected" data-subj="Physics">Physics</div>
+                <div class="chip selected" data-subj="Chemistry">Chemistry</div>
+                <div class="chip selected" data-subj="Biology">Biology</div>
+                <div class="chip selected" data-subj="Government">Government</div>
             </div>
+            <button class="btn" onclick="window.showScreen('exam')">📚 START MOCK EXAM</button>
         </div>
     </div>
 
-    <!-- Mock Exam Page -->
-    <div id="mock" class="page">
-        <div class="card">
-            <h2>📝 AI-Generated JAMB Mock Exam</h2>
-            <div class="subject-selector" id="subjectSelector">
-                <div class="subject-chip selected" data-subject="English">English</div>
-                <div class="subject-chip selected" data-subject="Mathematics">Mathematics</div>
-                <div class="subject-chip selected" data-subject="Physics">Physics</div>
-                <div class="subject-chip selected" data-subject="Chemistry">Chemistry</div>
-                <div class="subject-chip selected" data-subject="Biology">Biology</div>
-                <div class="subject-chip selected" data-subject="Government">Government</div>
+    <!-- EXAM SCREEN -->
+    <div id="exam" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div class="timer" id="exam-timer">02:00:00</div>
+            <button id="generate-exam-btn" class="btn" style="width: auto; padding: 8px 20px;">🎲 Generate AI Questions</button>
+        </div>
+        <div id="exam-content" style="display: none;">
+            <div class="subject-chips" id="exam-subjects"></div>
+            <div id="question-area"></div>
+            <div class="nav-buttons">
+                <button id="prev-q">◀ Previous</button>
+                <button id="next-q">Next ▶</button>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div class="timer" id="mockTimer">02:00:00</div>
-                <button id="generateMockBtn">🎲 Generate AI Questions & Start</button>
-            </div>
-            <div id="mockContent" style="display: none;">
-                <div id="questionArea" class="question-area"></div>
-                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button id="prevQuestion">◀ Previous</button>
-                    <button id="nextQuestion">Next ▶</button>
-                </div>
-                <button id="submitMock" style="background: #10b981; margin-top: 1rem;">✅ Submit Exam</button>
-            </div>
-            <div class="calculator-widget">
-                <h3>🧮 Calculator</h3>
-                <div class="calc-screen" id="mockCalcScreen">0</div>
-                <div class="calc-buttons">
-                    <button class="calc-btn" data-val="7">7</button><button class="calc-btn" data-val="8">8</button><button class="calc-btn" data-val="9">9</button><button class="calc-btn" data-val="/">÷</button>
-                    <button class="calc-btn" data-val="4">4</button><button class="calc-btn" data-val="5">5</button><button class="calc-btn" data-val="6">6</button><button class="calc-btn" data-val="*">×</button>
-                    <button class="calc-btn" data-val="1">1</button><button class="calc-btn" data-val="2">2</button><button class="calc-btn" data-val="3">3</button><button class="calc-btn" data-val="-">-</button>
-                    <button class="calc-btn" data-val="0">0</button><button class="calc-btn" data-val=".">.</button><button class="calc-btn" id="calcEqual">=</button><button class="calc-btn" data-val="+">+</button>
-                    <button class="calc-btn" id="calcClear">AC</button>
-                </div>
+            <button id="submit-exam" class="btn" style="background: var(--danger);">✅ Submit Exam</button>
+        </div>
+        <div class="calc-widget">
+            <div class="calc-screen" id="calc-screen">0</div>
+            <div class="calc-buttons">
+                <button class="calc-btn" data-val="7">7</button><button class="calc-btn" data-val="8">8</button><button class="calc-btn" data-val="9">9</button><button class="calc-btn" data-val="/">÷</button>
+                <button class="calc-btn" data-val="4">4</button><button class="calc-btn" data-val="5">5</button><button class="calc-btn" data-val="6">6</button><button class="calc-btn" data-val="*">×</button>
+                <button class="calc-btn" data-val="1">1</button><button class="calc-btn" data-val="2">2</button><button class="calc-btn" data-val="3">3</button><button class="calc-btn" data-val="-">-</button>
+                <button class="calc-btn" data-val="0">0</button><button class="calc-btn" data-val=".">.</button><button class="calc-btn" id="calc-equal">=</button><button class="calc-btn" data-val="+">+</button>
+                <button class="calc-btn" id="calc-clear">AC</button>
             </div>
         </div>
-        
-        <!-- Debug Console -->
-        <div class="debug-console" id="mockDebugConsole">
-            <h4>🐛 API Debug Log <button id="clearMockDebug" style="padding: 0.2rem 0.8rem; font-size: 0.7rem;">Clear</button></h4>
-            <div id="mockDebugLogs">Ready. Click 'Generate AI Questions' to start...</div>
+        <div class="debug-console" id="exam-debug">
+            <div style="display: flex; justify-content: space-between;">
+                <strong>🐛 API Debug Log</strong>
+                <button id="clear-exam-debug" style="background: none; border: none; color: var(--prim); cursor: pointer;">Clear</button>
+            </div>
+            <div id="exam-debug-logs">Ready. Click 'Generate AI Questions' to start...</div>
         </div>
     </div>
 
-    <!-- AI Chat Page -->
-    <div id="chat" class="page">
-        <div class="card">
-            <h2>🤖 AI Study Assistant (Google Gemini)</h2>
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message ai">Hello! I'm your AI study assistant. Ask me anything about JAMB subjects!</div>
-                </div>
-                <div class="chat-input-area">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="Ask me anything...">
-                    <button id="sendChatBtn">Send</button>
-                </div>
-            </div>
+    <!-- CHAT SCREEN -->
+    <div id="chat" class="screen">
+        <div id="chat-window" style="display:flex; flex-direction:column; margin-bottom: 10px;">
+            <div class="bubble ai-bubble">Hello! I'm your JAMB AI tutor. Ask me anything about your subjects or exam strategies.</div>
         </div>
-        <div class="debug-console" id="chatDebugConsole">
-            <h4>🐛 Chat API Debug Log <button id="clearChatDebug" style="padding: 0.2rem 0.8rem; font-size: 0.7rem;">Clear</button></h4>
-            <div id="chatDebugLogs">Ready for chat interactions...</div>
+        <div class="debug-console" id="chat-debug">
+            <div style="display: flex; justify-content: space-between;">
+                <strong>🐛 Chat Debug Log</strong>
+                <button id="clear-chat-debug" style="background: none; border: none; color: var(--prim); cursor: pointer;">Clear</button>
+            </div>
+            <div id="chat-debug-logs">Ready for chat interactions...</div>
         </div>
     </div>
 
-    <!-- Settings Page -->
-    <div id="settings" class="page">
-        <div class="card">
-            <h2>⚙️ Settings</h2>
-            <div class="setting-group" style="margin-bottom: 1.5rem;">
-                <label>🔑 Google AI API Key (Gemini)</label>
-                <input type="password" id="apiKeyInput" placeholder="Paste your Google AI API key here">
-                <small>Get from <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent);">Google AI Studio</a></small>
-                <button id="saveApiKey" style="margin-top: 0.5rem;">Save API Key</button>
-            </div>
-            <div class="setting-group" style="margin-bottom: 1.5rem;">
-                <label>🎨 Theme</label>
-                <div style="display: flex; gap: 1rem;">
-                    <button id="lightThemeBtn" class="theme-btn">☀️ Light Mode</button>
-                    <button id="darkThemeBtn" class="theme-btn">🌙 Dark Mode</button>
-                </div>
-            </div>
+    <!-- SETTINGS SCREEN -->
+    <div id="settings" class="screen">
+        <div class="glass-card">
+            <h3>🔑 Gemini API Key</h3>
+            <input type="password" id="api-key-input" placeholder="Paste your API key here" style="width:100%; padding:12px; margin-bottom:10px; background:#0d1117; color:white; border-radius:8px;">
+            <button class="btn" id="save-api-btn">SAVE KEY</button>
+            <p style="font-size:0.7rem; margin-top:10px;">Get your key from <a href="https://aistudio.google.com/" target="_blank" style="color:var(--prim);">Google AI Studio</a></p>
         </div>
     </div>
-</div>
+</main>
 
-<script>
-    // Debug Logging Utility
-    function addDebugLog(containerId, message, type = 'info') {
-        const container = document.getElementById(containerId);
-        if(!container) return;
-        const timestamp = new Date().toLocaleTimeString();
-        const logDiv = document.createElement('div');
-        logDiv.className = `debug-log ${type}`;
-        logDiv.innerHTML = `[${timestamp}] ${message}`;
-        container.appendChild(logDiv);
-        container.scrollTop = container.scrollHeight;
-        // Keep last 100 logs
-        while(container.children.length > 100) container.removeChild(container.firstChild);
-    }
+<footer id="chat-controls">
+    <div class="input-group">
+        <input type="text" id="chat-input" placeholder="Ask a JAMB question...">
+        <button class="btn" style="width:auto; padding:0 20px;" id="send-chat-btn">SEND</button>
+        <button class="btn" style="width:auto; background:#ff4b2b; color:white;" id="clear-chat-btn">×</button>
+    </div>
+</footer>
 
-    // Global state
-    let apiKey = localStorage.getItem('google_api_key') || '';
-    let mockQuestions = [];
+<script type="importmap">
+    { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+</script>
+
+<script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    // ---------- GLOBAL ----------
+    let apiKey = localStorage.getItem('jamb_api_key') || '';
+    let currentQuestions = [];
     let userAnswers = [];
     let currentQIndex = 0;
-    let mockTimer = 7200;
-    let mockActive = false;
-    let mockInterval = null;
-
-    // Calculator
+    let examTimer = 7200; // 2 hours
+    let timerInterval = null;
+    let examActive = false;
     let calcExpression = "0";
-    function updateCalcScreen() {
-        const screen = document.getElementById('mockCalcScreen');
-        if(screen) screen.innerText = calcExpression;
+
+    // Debug logging
+    function addDebugLog(containerId, message, type = 'info') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const time = new Date().toLocaleTimeString();
+        const logDiv = document.createElement('div');
+        logDiv.className = `debug-log ${type}`;
+        logDiv.innerHTML = `[${time}] ${message}`;
+        container.appendChild(logDiv);
+        container.scrollTop = container.scrollHeight;
+        while (container.children.length > 100) container.removeChild(container.firstChild);
     }
 
-    // AI Call Function with logging
-    async function callGeminiAPI(prompt, debugContainer, context = '') {
-        if(!apiKey) {
-            addDebugLog(debugContainer, `❌ ERROR: No API key provided. Please add in Settings.`, 'error');
+    // AI Call with logging
+    async function callGemini(prompt, debugContainer, context = '') {
+        if (!apiKey) {
+            addDebugLog(debugContainer, `❌ No API key. Please add in Settings.`, 'error');
             return null;
         }
+        addDebugLog(debugContainer, `📤 REQUEST: ${context || prompt.substring(0, 80)}...`, 'info');
+        try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
+            addDebugLog(debugContainer, `✅ SUCCESS: ${text.length} chars`, 'success');
+            return text;
+        } catch (e) {
+            addDebugLog(debugContainer, `❌ ERROR: ${e.message}`, 'error');
+            return null;
+        }
+    }
+
+    // ---------- MOCK EXAM ----------
+    async function generateMockQuestions() {
+        const selected = Array.from(document.querySelectorAll('#subject-chips .chip.selected, #exam-subjects .chip.selected'))
+            .map(c => c.dataset.subj);
+        if (selected.length === 0) {
+            addDebugLog('exam-debug-logs', '⚠️ No subjects selected!', 'error');
+            return null;
+        }
+        addDebugLog('exam-debug-logs', `🎯 Generating 180 questions for: ${selected.join(', ')}`, 'info');
         
-        addDebugLog(debugContainer, `📤 REQUEST to Gemini AI: ${context || prompt.substring(0, 100)}...`, 'info');
+        const prompt = `Generate exactly 180 JAMB (Nigerian) multiple-choice questions distributed evenly among these subjects: ${selected.join(', ')}.
+        For each question, provide JSON: {"subject":"Subject","text":"Question","options":["A","B","C","D"],"correct":0,"explanation":"..."}
+        Return ONLY a valid JSON array of 180 objects. Make questions realistic for JAMB/WAEC.`;
+        
+        const response = await callGemini(prompt, 'exam-debug-logs', 'Generating 180 questions');
+        if (!response) return null;
         
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
-                })
-            });
-            
-            const data = await response.json();
-            
-            if(!response.ok) {
-                addDebugLog(debugContainer, `❌ API ERROR (${response.status}): ${JSON.stringify(data.error || data)}`, 'error');
-                return null;
+            let jsonStr = response.match(/\[[\s\S]*\]/)?.[0] || response;
+            const questions = JSON.parse(jsonStr);
+            if (Array.isArray(questions) && questions.length >= 150) {
+                addDebugLog('exam-debug-logs', `✅ Generated ${questions.length} questions`, 'success');
+                return questions.slice(0, 180);
             }
-            
-            if(data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-                const result = data.candidates[0].content.parts[0].text;
-                addDebugLog(debugContainer, `✅ SUCCESS: Received ${result.length} characters from AI`, 'success');
-                return result;
-            } else {
-                addDebugLog(debugContainer, `❌ Unexpected API response format: ${JSON.stringify(data).substring(0, 200)}`, 'error');
-                return null;
-            }
-        } catch(e) {
-            addDebugLog(debugContainer, `❌ NETWORK ERROR: ${e.message}`, 'error');
-            return null;
+        } catch (e) {
+            addDebugLog('exam-debug-logs', `❌ Parse error: ${e.message}`, 'error');
         }
+        return generateFallbackQuestions(selected);
     }
 
-    // Generate Mock Questions using AI
-    async function generateAIMockQuestions() {
-        const selectedSubjects = Array.from(document.querySelectorAll('.subject-chip.selected')).map(c => c.dataset.subject);
-        if(selectedSubjects.length === 0) {
-            addDebugLog('mockDebugLogs', '❌ Please select at least one subject', 'error');
-            return null;
-        }
-        
-        addDebugLog('mockDebugLogs', `🎯 Generating 180 questions for subjects: ${selectedSubjects.join(', ')}`, 'info');
-        
-        const prompt = `Generate a JAMB (Joint Admissions and Matriculation Board) mock exam with exactly 180 multiple-choice questions. 
-        Subjects and distribution: ${selectedSubjects.join(', ')}. Distribute questions evenly across selected subjects.
-        
-        For each question, provide:
-        1. Subject name
-        2. Question text
-        3. Four options (A, B, C, D)
-        4. Correct answer (just the letter A, B, C, or D)
-        5. Brief explanation
-        
-        Format as JSON array exactly like:
-        [{"subject":"English","text":"...","options":["opt1","opt2","opt3","opt4"],"correct":0,"explanation":"..."}]
-        (correct is 0-based index: 0=A, 1=B, 2=C, 3=D)
-        
-        Make questions realistic for Nigerian JAMB exams, covering WAEC/NECO standards. Vary difficulty.
-        Return ONLY the JSON array, no other text.`;
-        
-        const response = await callGeminiAPI(prompt, 'mockDebugLogs', 'Generating 180 mock questions');
-        
-        if(response) {
-            try {
-                // Extract JSON from response
-                let jsonStr = response;
-                const jsonMatch = response.match(/\[[\s\S]*\]/);
-                if(jsonMatch) jsonStr = jsonMatch[0];
-                const questions = JSON.parse(jsonStr);
-                if(Array.isArray(questions) && questions.length >= 150) {
-                    addDebugLog('mockDebugLogs', `✅ Successfully generated ${questions.length} questions!`, 'success');
-                    return questions.slice(0, 180);
-                } else {
-                    addDebugLog('mockDebugLogs', `⚠️ Got ${questions.length} questions, generating fallback...`, 'info');
-                    return generateFallbackQuestions(selectedSubjects);
-                }
-            } catch(e) {
-                addDebugLog('mockDebugLogs', `❌ JSON Parse Error: ${e.message}. Using fallback.`, 'error');
-                return generateFallbackQuestions(selectedSubjects);
-            }
-        } else {
-            addDebugLog('mockDebugLogs', `⚠️ Using fallback questions due to API error`, 'info');
-            return generateFallbackQuestions(selectedSubjects);
-        }
-    }
-    
     function generateFallbackQuestions(subjects) {
         const questions = [];
-        const perSubject = Math.floor(180 / subjects.length);
-        subjects.forEach(subject => {
-            for(let i = 0; i < perSubject; i++) {
+        const per = Math.floor(180 / subjects.length);
+        subjects.forEach(subj => {
+            for (let i = 0; i < per; i++) {
                 questions.push({
-                    subject: subject,
-                    text: `${subject} Practice Question ${i+1}: ${subject === 'English' ? 'Choose the correct word: She ___ to school every day.' : subject === 'Mathematics' ? `Solve: 2x + ${i+5} = ${i+15}` : `Standard ${subject} concept question for JAMB`}`,
-                    options: ['Option A: Correct', 'Option B: Alternative', 'Option C: Another', 'Option D: Last'],
+                    subject: subj,
+                    text: `${subj} Sample Question ${i+1}: Choose the correct option.`,
+                    options: ["Option A: Correct", "Option B: Alternative", "Option C: Another", "Option D: Last"],
                     correct: 0,
-                    explanation: `This is a ${subject} question. The correct answer is Option A based on standard curriculum.`
+                    explanation: `This is a ${subj} practice question. The correct answer is A.`
                 });
             }
         });
-        return questions.slice(0, 180);
+        return questions;
     }
-    
-    async function startMock() {
-        const generateBtn = document.getElementById('generateMockBtn');
-        generateBtn.disabled = true;
-        generateBtn.innerHTML = '<span class="loading-spinner"></span> Generating AI Questions...';
-        
-        addDebugLog('mockDebugLogs', '🚀 Starting AI question generation...', 'info');
-        mockQuestions = await generateAIMockQuestions();
-        
-        if(!mockQuestions || mockQuestions.length === 0) {
-            addDebugLog('mockDebugLogs', '❌ Failed to generate questions', 'error');
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '🎲 Generate AI Questions & Start';
-            return;
-        }
-        
-        userAnswers = new Array(mockQuestions.length).fill(null);
+
+    function startExam(questions) {
+        if (timerInterval) clearInterval(timerInterval);
+        currentQuestions = questions;
+        userAnswers = new Array(questions.length).fill(null);
         currentQIndex = 0;
-        mockActive = true;
-        mockTimer = 7200;
-        updateMockTimerDisplay();
+        examActive = true;
+        examTimer = 7200;
+        updateTimerDisplay();
         
-        if(mockInterval) clearInterval(mockInterval);
-        mockInterval = setInterval(() => {
-            if(mockActive && mockTimer > 0) {
-                mockTimer--;
-                updateMockTimerDisplay();
-                if(mockTimer === 0) submitMock();
+        timerInterval = setInterval(() => {
+            if (examActive && examTimer > 0) {
+                examTimer--;
+                updateTimerDisplay();
+                if (examTimer === 0) submitExam();
             }
         }, 1000);
         
-        document.getElementById('mockContent').style.display = 'block';
+        document.getElementById('exam-content').style.display = 'block';
+        document.getElementById('generate-exam-btn').style.display = 'none';
         renderQuestion();
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = '🎲 Regenerate AI Questions';
-        addDebugLog('mockDebugLogs', `✅ Mock ready! ${mockQuestions.length} questions loaded. Timer started.`, 'success');
+        addDebugLog('exam-debug-logs', `🚀 Exam started. ${questions.length} questions loaded.`, 'success');
     }
-    
-    function updateMockTimerDisplay() {
-        let hrs = Math.floor(mockTimer / 3600);
-        let mins = Math.floor((mockTimer % 3600) / 60);
-        let secs = mockTimer % 60;
-        document.getElementById('mockTimer').innerText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+
+    function updateTimerDisplay() {
+        let hrs = Math.floor(examTimer / 3600);
+        let mins = Math.floor((examTimer % 3600) / 60);
+        let secs = examTimer % 60;
+        document.getElementById('exam-timer').innerText = `${hrs.toString().padStart(2,'0')}:${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
     }
-    
+
     function renderQuestion() {
-        if(!mockQuestions.length) return;
-        const q = mockQuestions[currentQIndex];
+        if (!currentQuestions.length) return;
+        const q = currentQuestions[currentQIndex];
         const html = `
-            <h3>Question ${currentQIndex + 1}/${mockQuestions.length}</h3>
-            <p style="background: var(--bg-secondary); padding: 1rem; border-radius: 20px; margin: 1rem 0;"><strong>📖 ${q.subject}</strong><br>${q.text}</p>
-            <div class="options-grid">
+            <div class="q-card">
+                <p><strong>${currentQIndex+1}. [${q.subject}]</strong> ${q.text}</p>
                 ${q.options.map((opt, idx) => `
-                    <div class="option-item ${userAnswers[currentQIndex] === idx ? 'selected' : ''}" onclick="selectAnswer(${idx})">
-                        ${String.fromCharCode(65+idx)}. ${opt}
-                    </div>
+                    <button class="opt ${userAnswers[currentQIndex] === idx ? 'correct-highlight' : ''}" 
+                            onclick="window.selectAnswer(${idx})">${String.fromCharCode(65+idx)}. ${opt}</button>
                 `).join('')}
             </div>
         `;
-        document.getElementById('questionArea').innerHTML = html;
+        document.getElementById('question-area').innerHTML = html;
     }
-    
+
     window.selectAnswer = (idx) => {
         userAnswers[currentQIndex] = idx;
         renderQuestion();
     };
-    
-    function submitMock() {
-        if(mockInterval) clearInterval(mockInterval);
-        mockActive = false;
+
+    function submitExam() {
+        if (timerInterval) clearInterval(timerInterval);
+        examActive = false;
         let score = 0;
-        let results = [];
-        mockQuestions.forEach((q, idx) => {
-            const isCorrect = userAnswers[idx] === q.correct;
-            if(isCorrect) score++;
-            results.push(`Q${idx+1}: ${isCorrect ? '✓' : '✗'}`);
+        currentQuestions.forEach((q, i) => {
+            if (userAnswers[i] === q.correct) score++;
         });
-        alert(`📊 Mock Exam Results!\nScore: ${score}/${mockQuestions.length} (${((score/mockQuestions.length)*100).toFixed(1)}%)\n\nCheck Debug Console for details.`);
-        addDebugLog('mockDebugLogs', `📊 SUBMITTED: Score ${score}/${mockQuestions.length} (${((score/mockQuestions.length)*100).toFixed(1)}%)`, 'success');
-        document.getElementById('mockContent').style.display = 'none';
+        const percent = ((score / currentQuestions.length) * 100).toFixed(1);
+        alert(`🎉 Mock Exam Completed!\nScore: ${score}/${currentQuestions.length} (${percent}%)\nCheck debug console for detailed results.`);
+        addDebugLog('exam-debug-logs', `📊 RESULT: ${score}/${currentQuestions.length} (${percent}%)`, 'success');
+        document.getElementById('exam-content').style.display = 'none';
+        document.getElementById('generate-exam-btn').style.display = 'block';
+        document.getElementById('generate-exam-btn').innerText = '🔄 Generate New AI Questions';
     }
-    
-    // Chat functionality with logging
-    async function sendChatMessage() {
-        const input = document.getElementById('chatInput');
-        const message = input.value.trim();
-        if(!message) return;
-        
-        addDebugLog('chatDebugLogs', `💬 USER: ${message}`, 'info');
-        
-        const chatMessages = document.getElementById('chatMessages');
-        chatMessages.innerHTML += `<div class="message user">${escapeHtml(message)}</div>`;
+
+    // ---------- CHAT ----------
+    async function sendChat() {
+        const input = document.getElementById('chat-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        const chatWin = document.getElementById('chat-window');
+        chatWin.innerHTML += `<div class="bubble user-bubble">${escapeHtml(msg)}</div>`;
         input.value = '';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        chatWin.scrollTop = chatWin.scrollHeight;
         
-        const aiResponse = await callGeminiAPI(message, 'chatDebugLogs', `Chat: ${message.substring(0, 50)}`);
-        const responseText = aiResponse || "⚠️ Sorry, I couldn't process that. Please check your API key in Settings.";
-        
-        addDebugLog('chatDebugLogs', `🤖 AI RESPONSE: ${responseText.substring(0, 100)}...`, 'success');
-        chatMessages.innerHTML += `<div class="message ai">${escapeHtml(responseText)}</div>`;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        const response = await callGemini(`You are a JAMB tutor. Answer concisely: ${msg}`, 'chat-debug-logs', 'Chat message');
+        const reply = response || "⚠️ Sorry, I couldn't process that. Please check your API key.";
+        chatWin.innerHTML += `<div class="bubble ai-bubble">${escapeHtml(reply)}</div>`;
+        chatWin.scrollTop = chatWin.scrollHeight;
     }
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+
+    function clearChat() {
+        document.getElementById('chat-window').innerHTML = '<div class="bubble ai-bubble">Chat cleared! How can I help?</div>';
+        addDebugLog('chat-debug-logs', '🗑️ Chat cleared', 'info');
     }
-    
-    // Initialize calculator
-    function initCalculator() {
-        document.querySelectorAll('.calc-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if(btn.dataset.val) {
-                    if(calcExpression === "0") calcExpression = btn.dataset.val;
-                    else calcExpression += btn.dataset.val;
-                    updateCalcScreen();
-                }
-            });
-        });
-        document.getElementById('calcEqual')?.addEventListener('click', () => {
-            try {
-                let expr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
-                let result = eval(expr);
-                calcExpression = String(result);
-                updateCalcScreen();
-            } catch(e) { calcExpression = "Error"; updateCalcScreen(); setTimeout(() => { calcExpression = "0"; updateCalcScreen(); }, 1000); }
-        });
-        document.getElementById('calcClear')?.addEventListener('click', () => {
-            calcExpression = "0";
-            updateCalcScreen();
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
         });
     }
-    
-    // Event Listeners
-    document.querySelectorAll('.nav-btn').forEach(btn => {
+
+    // ---------- CALCULATOR ----------
+    function updateCalcScreen() {
+        const screen = document.getElementById('calc-screen');
+        if (screen) screen.innerText = calcExpression;
+    }
+
+    // ---------- INITIALIZATION & EVENT LISTENERS ----------
+    window.showScreen = (id) => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+        document.getElementById(id).classList.add('active-screen');
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`nav-${id}`).classList.add('active');
+        if (id === 'chat') document.body.classList.add('chat-active');
+        else document.body.classList.remove('chat-active');
+        document.getElementById('main-content').scrollTop = 0;
+    };
+
+    // Subject chips logic
+    function setupSubjectChips() {
+        const chips = document.querySelectorAll('.chip');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => chip.classList.toggle('selected'));
+        });
+        // Copy selection to exam screen when starting
+        document.getElementById('generate-exam-btn').addEventListener('click', async () => {
+            const selectedHome = Array.from(document.querySelectorAll('#subject-chips .chip.selected')).map(c => c.dataset.subj);
+            if (selectedHome.length === 0) {
+                alert('Please select at least one subject on the Home screen.');
+                return;
+            }
+            // Show loading
+            const btn = document.getElementById('generate-exam-btn');
+            btn.innerText = '⏳ Generating AI questions...';
+            btn.disabled = true;
+            const questions = await generateMockQuestions();
+            if (questions) {
+                startExam(questions);
+            } else {
+                alert('Failed to generate questions. Check API key or try again.');
+                btn.innerText = '🎲 Generate AI Questions';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    // Navigation in exam
+    document.getElementById('prev-q')?.addEventListener('click', () => {
+        if (currentQIndex > 0) { currentQIndex--; renderQuestion(); }
+    });
+    document.getElementById('next-q')?.addEventListener('click', () => {
+        if (currentQIndex < currentQuestions.length - 1) { currentQIndex++; renderQuestion(); }
+    });
+    document.getElementById('submit-exam')?.addEventListener('click', submitExam);
+
+    // Settings
+    document.getElementById('save-api-btn')?.addEventListener('click', () => {
+        const key = document.getElementById('api-key-input').value.trim();
+        if (key) {
+            apiKey = key;
+            localStorage.setItem('jamb_api_key', key);
+            alert('API Key saved!');
+            addDebugLog('exam-debug-logs', '🔑 API key updated', 'success');
+            addDebugLog('chat-debug-logs', '🔑 API key updated', 'success');
+        } else alert('Enter a valid key');
+    });
+
+    // Chat buttons
+    document.getElementById('send-chat-btn')?.addEventListener('click', sendChat);
+    document.getElementById('clear-chat-btn')?.addEventListener('click', clearChat);
+    document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
+
+    // Debug clear
+    document.getElementById('clear-exam-debug')?.addEventListener('click', () => {
+        document.getElementById('exam-debug-logs').innerHTML = '';
+        addDebugLog('exam-debug-logs', 'Logs cleared', 'info');
+    });
+    document.getElementById('clear-chat-debug')?.addEventListener('click', () => {
+        document.getElementById('chat-debug-logs').innerHTML = '';
+        addDebugLog('chat-debug-logs', 'Logs cleared', 'info');
+    });
+
+    // Calculator
+    document.querySelectorAll('.calc-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.getElementById(btn.dataset.page).classList.add('active-page');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            if (btn.dataset.val) {
+                if (calcExpression === "0") calcExpression = btn.dataset.val;
+                else calcExpression += btn.dataset.val;
+                updateCalcScreen();
+            }
         });
     });
-    
-    document.getElementById('generateMockBtn')?.addEventListener('click', startMock);
-    document.getElementById('prevQuestion')?.addEventListener('click', () => { if(currentQIndex > 0) { currentQIndex--; renderQuestion(); } });
-    document.getElementById('nextQuestion')?.addEventListener('click', () => { if(currentQIndex < mockQuestions.length - 1) { currentQIndex++; renderQuestion(); } });
-    document.getElementById('submitMock')?.addEventListener('click', submitMock);
-    document.getElementById('sendChatBtn')?.addEventListener('click', sendChatMessage);
-    document.getElementById('chatInput')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChatMessage(); });
-    document.getElementById('saveApiKey')?.addEventListener('click', () => {
-        apiKey = document.getElementById('apiKeyInput').value;
-        localStorage.setItem('google_api_key', apiKey);
-        addDebugLog('mockDebugLogs', `🔑 API Key saved`, 'success');
-        addDebugLog('chatDebugLogs', `🔑 API Key saved`, 'success');
-        alert('API Key saved!');
+    document.getElementById('calc-equal')?.addEventListener('click', () => {
+        try {
+            let expr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+            let result = eval(expr);
+            calcExpression = String(result);
+            updateCalcScreen();
+        } catch(e) { calcExpression = "Error"; updateCalcScreen(); setTimeout(() => { calcExpression = "0"; updateCalcScreen(); }, 1000); }
     });
-    document.getElementById('lightThemeBtn')?.addEventListener('click', () => document.body.classList.remove('dark'));
-    document.getElementById('darkThemeBtn')?.addEventListener('click', () => document.body.classList.add('dark'));
-    document.getElementById('clearMockDebug')?.addEventListener('click', () => { document.getElementById('mockDebugLogs').innerHTML = ''; });
-    document.getElementById('clearChatDebug')?.addEventListener('click', () => { document.getElementById('chatDebugLogs').innerHTML = ''; });
-    
-    // Subject selection
-    document.querySelectorAll('.subject-chip').forEach(chip => {
-        chip.addEventListener('click', () => chip.classList.toggle('selected'));
+    document.getElementById('calc-clear')?.addEventListener('click', () => {
+        calcExpression = "0";
+        updateCalcScreen();
     });
-    
+
     // Load saved API key
-    if(apiKey) document.getElementById('apiKeyInput').value = apiKey;
-    
-    initCalculator();
-    addDebugLog('mockDebugLogs', '✅ Platform ready. Add API key in Settings, then generate AI questions!', 'success');
+    if (apiKey) document.getElementById('api-key-input').value = apiKey;
+    setupSubjectChips();
+    updateCalcScreen();
+    addDebugLog('exam-debug-logs', '✅ Ready. Add API key in Settings then generate questions.', 'success');
+    addDebugLog('chat-debug-logs', '✅ Chat ready.', 'success');
 </script>
 </body>
 </html>
