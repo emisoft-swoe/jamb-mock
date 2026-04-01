@@ -2,223 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JAMB AI ELITE | 2026</title>
     <style>
-        :root {
-            --bg: #080a0f;
-            --glass: rgba(20, 24, 35, 0.8);
-            --prim: #00ff88;
-            --prim-glow: rgba(0, 255, 136, 0.4);
-            --text: #ffffff;
-            --accent: #00d4ff;
-        }
+        :root { --bg: #080a0f; --prim: #00ff88; --accent: #00d4ff; --text: #ffffff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        nav { background: rgba(20,24,35,0.9); display: flex; justify-content: space-around; padding: 15px; border-bottom: 1px solid #333; }
+        nav button { background: none; border: 1px solid transparent; color: #888; padding: 10px; cursor: pointer; font-weight: bold; }
+        nav button.active { color: var(--prim); border-bottom: 2px solid var(--prim); }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        .screen { display: none; flex-direction: column; padding: 20px; height: 100%; overflow-y: auto; animation: fadeIn 0.5s; }
+        .active-screen { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        body {
-            background: radial-gradient(circle at top right, #1a1f2b, #080a0f);
-            color: var(--text);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding: 50px 0px;
-        }
+        .card { background: #11141d; padding: 20px; border-radius: 15px; border: 1px solid #2d3436; margin-bottom: 15px; }
+        .q-card { border-left: 4px solid var(--prim); margin-bottom: 20px; padding: 15px; background: #1a1f2b; border-radius: 8px; }
+        
+        .opt-btn { display: block; width: 100%; text-align: left; padding: 12px; margin: 8px 0; background: #252c39; border: 1px solid transparent; color: white; border-radius: 8px; cursor: pointer; }
+        .opt-btn:hover { border-color: var(--prim); }
 
-        /* --- NAVIGATION --- */
-        nav {
-            background: var(--glass);
-            backdrop-filter: blur(15px);
-            display: flex;
-            justify-content: space-around;
-            padding: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            z-index: 1000;
-        }
+        #chat-logs { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+        .msg { padding: 12px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+        .user { background: var(--accent); color: #000; align-self: flex-end; }
+        .ai { background: #2d3436; align-self: flex-start; }
 
-        nav button {
-            background: none;
-            border: 1px solid transparent;
-            color: rgba(255,255,255,0.6);
-            padding: 10px 18px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.85rem;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        nav button.active, nav button:focus {
-            color: var(--prim);
-            background: rgba(0, 255, 136, 0.1);
-            border-color: var(--prim);
-            box-shadow: 0 0 15px var(--prim-glow);
-            transform: translateY(-2px);
-        }
-
-        /* --- ANIMATED SCREENS --- */
-        .screen {
-            display: none;
-            flex-direction: column;
-            padding: 20px;
-            height: calc(100vh - 65px);
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-
-        .active-screen { display: flex; animation: reveal 0.6s ease; }
-
-        @keyframes reveal {
-            from { opacity: 0; transform: scale(0.98) translateY(10px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        /* --- DASHBOARD --- */
-        .hero {
-            text-align: center;
-            margin: auto;
-            max-width: 500px;
-        }
-
-        .hero h1 { 
-            font-size: 2.5rem; 
-            margin-bottom: 10px; 
-            background: linear-gradient(to right, #00ff88, #00d4ff); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-        }
-
-        /* --- EXAM CARDS --- */
-        .q-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 18px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: 0.3s;
-        }
-
-        .q-card:hover { border-color: var(--prim); background: rgba(255,255,255,0.05); }
-
-        .opt-btn {
-            display: block;
-            width: 100%;
-            text-align: left;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid transparent;
-            color: white;
-            padding: 14px;
-            margin: 8px 0;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        .opt-btn:focus, .opt-btn:active { background: var(--prim-glow); border-color: var(--prim); }
-
-        /* --- CHAT INTERFACE --- */
-        #chat-logs {
-            flex-grow: 1;
-            padding: 10px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .msg { padding: 14px; border-radius: 18px; max-width: 85%; font-size: 0.95rem; line-height: 1.4; }
-        .user-msg { background: var(--accent); color: #000; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .ai-msg { background: #1e2533; color: #fff; align-self: flex-start; border-bottom-left-radius: 4px; border-left: 3px solid var(--prim); }
-
-        .input-area {
-            background: #121620;
-            padding: 15px;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .main-input {
-            flex-grow: 1;
-            background: #1e2533;
-            border: 1px solid #2d3436;
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 1rem;
-        }
-
-        .action-btn {
-            background: var(--prim);
-            color: #000;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 12px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* --- RESPONSIVENESS --- */
-        @media (max-width: 600px) {
-            .hero h1 { font-size: 1.8rem; }
-            .screen { padding: 15px; }
-            nav button { padding: 8px 12px; font-size: 0.75rem; }
-        }
-
-        /* TV Optimization */
-        @media (min-width: 1500px) {
-            .screen { padding: 40px 20%; }
-        }
+        .input-box { display: flex; gap: 10px; padding: 15px; background: #05070a; border-top: 1px solid #333; }
+        input { flex-grow: 1; background: #1e2533; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; }
+        .btn { background: var(--prim); color: #000; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <nav>
-    <button onclick="window.showScreen('home')" id="btn-home" class="active">DASHBOARD</button>
-    <button onclick="window.showScreen('exam')" id="btn-exam">MOCK EXAM</button>
-    <button onclick="window.showScreen('chat')" id="btn-chat">AI TUTOR</button>
+    <button onclick="window.showScreen('home')" id="btn-home" class="active">HOME</button>
+    <button onclick="window.showScreen('exam')" id="btn-exam">EXAM</button>
+    <button onclick="window.showScreen('chat')" id="btn-chat">AI CHAT</button>
     <button onclick="window.showScreen('settings')" id="btn-settings">SETTINGS</button>
 </nav>
 
 <div id="home" class="screen active-screen">
-    <div class="hero">
+    <div class="card" style="text-align:center;">
         <h1>JAMB AI ELITE</h1>
-        <p style="color: #aaa; margin-bottom: 30px;">The smartest way to hit 300+ in your UTME.</p>
-        <button class="action-btn" style="width: 100%; height: 60px;" onclick="window.showScreen('exam')">START 180-QUESTION MOCK</button>
+        <p>Ready for 180 questions?</p>
+        <button class="btn" onclick="window.showScreen('exam')">START MOCK</button>
     </div>
 </div>
 
 <div id="exam" class="screen">
-    <div id="timer-box" style="text-align:center; color: var(--prim); font-weight: 900; font-size: 1.5rem; margin-bottom: 20px;">120:00</div>
+    <div id="status" style="text-align:center; color:var(--prim); margin-bottom:10px;"></div>
     <div id="exam-init" style="text-align:center;">
-        <button class="action-btn" style="height:50px; margin: 0 auto;" onclick="window.launchExam()">GENERATE FULL EXAM</button>
-        <p id="exam-status" style="margin-top:15px; font-size: 0.9rem; color: #888;"></p>
+        <button class="btn" onclick="window.generateExam()">GENERATE QUESTIONS</button>
     </div>
-    <div id="exam-render"></div>
+    <div id="exam-area"></div>
 </div>
 
 <div id="chat" class="screen" style="padding:0;">
-    <div id="chat-logs">
-        <div class="msg ai-msg">Welcome! I'm your JAMB AI Tutor. Type any topic you're struggling with below.</div>
-    </div>
-    <div class="input-area">
-        <input type="text" id="chat-query" class="main-input" placeholder="Ask anything...">
-        <button class="action-btn" onclick="window.sendChat()">SEND</button>
+    <div id="chat-logs" style="padding:20px;"></div>
+    <div class="input-box">
+        <input type="text" id="chat-input" placeholder="Ask anything...">
+        <button class="btn" onclick="window.sendChat()">SEND</button>
     </div>
 </div>
 
 <div id="settings" class="screen">
-    <div style="max-width:500px; margin: auto; width:100%;">
+    <div class="card">
         <h2>Settings</h2>
-        <p style="font-size: 0.85rem; color: #888;">Enter your Google Gemini API Key.</p>
-        <input type="password" id="api-key-val" class="main-input" placeholder="AIzaSy...">
-        <button class="action-btn" style="width:100%; margin-top:20px; height:50px;" onclick="window.saveKey()">SAVE KEY</button>
+        <input type="password" id="api-key" placeholder="Paste API Key here...">
+        <button class="btn" style="width:100%; margin-top:10px;" onclick="window.saveKey()">SAVE KEY</button>
     </div>
 </div>
 
@@ -229,98 +80,109 @@
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // --- FIX: Attach functions to window so buttons can see them ---
-    
+    // --- NAVIGATION ---
     window.showScreen = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
         document.getElementById(id).classList.add('active-screen');
-        const btn = document.getElementById('btn-'+id);
-        if(btn) btn.classList.add('active');
+        document.getElementById('btn-'+id).classList.add('active');
     };
 
     window.saveKey = () => {
-        const val = document.getElementById('api-key-val').value.trim();
-        if(val) {
-            localStorage.setItem('jamb_key_2026', val);
-            alert("API Key Saved Successfully!");
-        } else {
-            alert("Please enter a valid key.");
-        }
+        const key = document.getElementById('api-key').value.trim();
+        localStorage.setItem('jamb_key', key);
+        alert("Key saved!");
     };
 
-    async function callAI(prompt) {
-        const key = localStorage.getItem('jamb_key_2026');
-        if(!key) { alert("Add your API key in Settings first!"); return null; }
+    // --- CORE AI CALL (With Cleaner Logic) ---
+    async function askAI(prompt) {
+        const key = localStorage.getItem('jamb_key');
+        if(!key) return "Error: No API Key found in Settings.";
         
         try {
             const genAI = new GoogleGenerativeAI(key);
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(prompt);
-            return result.response.text();
+            let response = await result.response.text();
+            
+            // Clean up Markdown formatting if AI sends it
+            return response.replace(/```/g, "").trim();
         } catch (e) {
             console.error(e);
-            return "Connection Error. Check your API key or internet.";
+            return "Connection Error. Check your internet or API key.";
         }
     }
 
+    // --- CHAT LOGIC ---
     window.sendChat = async () => {
-        const input = document.getElementById('chat-query');
+        const input = document.getElementById('chat-input');
         const logs = document.getElementById('chat-logs');
         if(!input.value) return;
 
-        const text = input.value;
-        logs.innerHTML += `<div class="msg user-msg">${text}</div>`;
+        logs.innerHTML += `<div class="msg user">${input.value}</div>`;
+        const userQuery = input.value;
         input.value = "";
         logs.scrollTop = logs.scrollHeight;
 
-        const response = await callAI("Answer as a JAMB expert teacher: " + text);
-        logs.innerHTML += `<div class="msg ai-msg">${response}</div>`;
+        const reply = await askAI("Answer as a JAMB teacher: " + userQuery);
+        logs.innerHTML += `<div class="msg ai">${reply}</div>`;
         logs.scrollTop = logs.scrollHeight;
     };
 
-    window.launchExam = async () => {
-    const status = document.getElementById('exam-status');
-    const render = document.getElementById('exam-render');
-    status.innerText = "Generating 180 questions... (Step 1/2)";
-    
-    // 1. Force the model to use JSON mode if possible
-    const key = localStorage.getItem('jamb_key_2026');
-    const genAI = new GoogleGenerativeAI(key);
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
-        generationConfig: { responseMimeType: "application/json" } // Standardizes output
-    });
+    // --- EXAM LOGIC (With Random Distractor Generator) ---
+    window.generateExam = async () => {
+        const status = document.getElementById('status');
+        const area = document.getElementById('exam-area');
+        status.innerText = "Connecting to AI... Please wait.";
 
-    try {
-        // Requesting a smaller batch first to ensure stability
-        const prompt = "Generate 20 JAMB English questions. Return ONLY a JSON array of objects with keys 'q' (question string), 'o' (array of 4 options), and 'a' (index of correct answer 0-3).";
-        const result = await model.generateContent(prompt);
-        let text = await result.response.text();
+        const prompt = `Generate 10 JAMB UTME questions. 
+        Format: Question | CorrectAnswer
+        Example: What is the boiling point of water?|100°C
+        Strictly one per line. No numbers.`;
 
-        // 2. CLEANING LOGIC: Strip markdown backticks if they exist
-        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const raw = await askAI(prompt);
+        if(raw.startsWith("Connection Error") || raw.startsWith("Error")) {
+            status.innerText = raw;
+            return;
+        }
 
-        const data = JSON.parse(text);
-        
+        const lines = raw.split('\n').filter(l => l.includes('|'));
+        const questions = lines.map(line => {
+            const [q, correct] = line.split('|');
+            
+            // --- JAVASCRIPT RANDOM OPTION GENERATOR ---
+            // These act as "fallbacks" so the AI doesn't have to work as hard
+            const distractors = ["250", "Unknown", "Not in syllabus", "Depends on pressure", "None of these", "0.5", "10", "Zero"];
+            let options = [correct.trim()];
+            
+            // Add 3 random distractors
+            while(options.length < 4) {
+                let d = distractors[Math.floor(Math.random() * distractors.length)];
+                if(!options.includes(d)) options.push(d);
+            }
+            
+            // Shuffle them
+            options.sort(() => Math.random() - 0.5);
+            return { question: q.trim(), options, correct: options.indexOf(correct.trim()) };
+        });
+
         document.getElementById('exam-init').style.display = 'none';
-        render.innerHTML = data.map((q, i) => `
-            <div class="q-card" style="animation-delay: ${i * 0.1}s">
-                <p><strong>${i+1}.</strong> ${q.q}</p>
-                ${q.o.map((opt, oi) => `
-                    <button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.style.border='none'); this.style.border='2px solid #00ff88';">
-                        ${opt}
-                    </button>`).join('')}
+        area.innerHTML = questions.map((q, i) => `
+            <div class="q-card">
+                <p><strong>${i+1}.</strong> ${q.question}</p>
+                ${q.options.map((opt, oi) => `
+                    <button class="opt-btn" onclick="check(this, ${oi === q.correct})">${opt}</button>
+                `).join('')}
             </div>
         `).join('');
-        
-        status.innerText = "Exam Loaded Successfully!";
-    } catch (e) {
-        console.error("Parsing Error:", e);
-        status.innerText = "AI sent a messy response. Please click 'Generate' again.";
-    }
-};
+        status.innerText = "Success! Solve the questions below.";
+    };
 
+    window.check = (btn, isCorrect) => {
+        btn.parentElement.querySelectorAll('button').forEach(b => b.style.borderColor = 'transparent');
+        btn.style.borderColor = isCorrect ? '#00ff88' : '#ff4757';
+        btn.style.background = isCorrect ? 'rgba(0,255,136,0.2)' : 'rgba(255,71,87,0.2)';
+    };
 </script>
 </body>
 </html>
