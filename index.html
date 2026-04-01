@@ -9,33 +9,29 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Navigation */
         nav { background: var(--card); display: flex; justify-content: space-around; padding: 12px; border-bottom: 2px solid var(--prim); z-index: 10; }
         nav button { background: none; border: none; color: #8b949e; font-weight: bold; cursor: pointer; padding: 10px; transition: 0.3s; }
         nav button.active { color: var(--prim); border-bottom: 2px solid var(--prim); }
 
-        /* Screens */
         .screen { display: none; flex-direction: column; padding: 20px; height: 100%; overflow-y: auto; }
         .active-screen { display: flex; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* UI Elements */
         .glass-card { background: var(--card); border: 1px solid #30363d; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         .btn { background: var(--prim); color: #0d1117; border: none; padding: 14px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
         
-        /* Quiz Styling */
+        select { width: 100%; padding: 12px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 15px; font-size: 1rem; }
+
         .q-card { background: #0d1117; border-left: 4px solid var(--prim); padding: 15px; margin-bottom: 15px; border-radius: 6px; }
         .opt { display: block; width: 100%; text-align: left; padding: 12px; margin: 8px 0; background: #21262d; border: 1px solid #30363d; color: white; border-radius: 6px; cursor: pointer; }
         
-        /* Chat Styling */
         #chat-window { flex-grow: 1; display: flex; flex-direction: column; gap: 10px; padding-bottom: 80px; }
-        .bubble { padding: 12px; border-radius: 12px; max-width: 85%; line-height: 1.4; font-size: 0.95rem; }
+        .bubble { padding: 12px; border-radius: 12px; max-width: 85%; line-height: 1.4; }
         .user-bubble { background: var(--accent); color: white; align-self: flex-end; }
         .ai-bubble { background: #30363d; align-self: flex-start; border-left: 3px solid var(--prim); }
 
         .input-row { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); padding: 15px; display: flex; gap: 10px; border-top: 1px solid #30363d; }
-        input { flex-grow: 1; background: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 6px; outline: none; }
+        input { flex-grow: 1; background: #0d1117; border: 1px solid #30363d; color: white; padding: 12px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -50,15 +46,25 @@
 <div id="home" class="screen active-screen">
     <div class="glass-card" style="text-align:center;">
         <h1 style="color:var(--prim);">JAMB MASTER 2026</h1>
-        <p>Your goal is 300+. Our AI is your weapon.</p>
-        <button class="btn" onclick="window.showScreen('exam')">START PRACTICE</button>
+        <p>Target: 300+ Aggregate</p>
+        
+        <label style="display:block; text-align:left; margin-bottom:5px; font-size:0.9rem; color:#8b949e;">Select Subject:</label>
+        <select id="subject-select">
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="Mathematics">Mathematics</option>
+            <option value="English Language">English Language</option>
+        </select>
+        
+        <button class="btn" onclick="window.showScreen('exam')">START MOCK EXAM</button>
     </div>
 </div>
 
 <div id="exam" class="screen">
     <div id="timer" style="text-align:center; font-size: 1.5rem; color: var(--prim); font-weight: 900; margin-bottom: 10px;">120:00</div>
     <div id="exam-controls" style="text-align:center;">
-        <button class="btn" id="gen-btn" onclick="window.generateQuiz()">GENERATE 180 QUESTIONS</button>
+        <button class="btn" id="gen-btn" onclick="window.generateQuiz()">GENERATE QUESTIONS</button>
         <p id="exam-status" style="margin-top:10px; color: #8b949e;"></p>
     </div>
     <div id="quiz-container"></div>
@@ -66,7 +72,7 @@
 
 <div id="chat" class="screen">
     <div id="chat-window">
-        <div class="bubble ai-bubble">Ask me anything about Physics, Chemistry, Biology, or English!</div>
+        <div class="bubble ai-bubble">I am your personal JAMB tutor. Ask me to explain any difficult concept!</div>
     </div>
     <div class="input-row">
         <input type="text" id="chat-input" placeholder="Type topic...">
@@ -77,10 +83,8 @@
 <div id="settings" class="screen">
     <div class="glass-card">
         <h3>Settings</h3>
-        <label>Gemini API Key:</label>
-        <input type="password" id="api-key-input" placeholder="AIzaSy..." style="width:100%; margin: 10px 0;">
-        <button class="btn" onclick="window.saveKey()">SAVE KEY</button>
-        <p style="font-size: 0.8rem; color: #8b949e; margin-top:10px;">Your key is stored locally on this device only.</p>
+        <input type="password" id="api-key-input" placeholder="Paste Gemini API Key...">
+        <button class="btn" style="margin-top:10px;" onclick="window.saveKey()">SAVE KEY</button>
     </div>
 </div>
 
@@ -91,7 +95,6 @@
 <script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
-    // --- NAVIGATION ---
     window.showScreen = (id) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -101,73 +104,59 @@
 
     window.saveKey = () => {
         const k = document.getElementById('api-key-input').value.trim();
-        if(k) {
-            localStorage.setItem('jamb_key_v3', k);
-            alert("Settings Updated!");
-        }
+        if(k) { localStorage.setItem('jamb_key_v4', k); alert("Key Saved!"); }
     };
 
-    // --- AI CORE ---
     async function talkToAI(prompt) {
-        const key = localStorage.getItem('jamb_key_v3');
-        if(!key) { alert("Please set your API Key in Settings!"); return null; }
-        
+        const key = localStorage.getItem('jamb_key_v4');
+        if(!key) { alert("Set API Key in Settings!"); return null; }
         try {
             const genAI = new GoogleGenerativeAI(key);
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
             const result = await model.generateContent(prompt);
             return result.response.text();
-        } catch (e) {
-            console.error(e);
-            return "ERROR_CONNECTION";
-        }
+        } catch (e) { return "ERROR"; }
     }
 
-    // --- CHAT ---
     window.sendChat = async () => {
         const box = document.getElementById('chat-input');
         const win = document.getElementById('chat-window');
         if(!box.value) return;
-
         const text = box.value;
         win.innerHTML += `<div class="bubble user-bubble">${text}</div>`;
         box.value = "";
-        
         const response = await talkToAI("Answer as a JAMB teacher: " + text);
-        win.innerHTML += `<div class="bubble ai-bubble">${response === "ERROR_CONNECTION" ? "Check your internet/API Key!" : response}</div>`;
-        win.parentElement.scrollTop = win.parentElement.scrollHeight;
+        win.innerHTML += `<div class="bubble ai-bubble">${response === "ERROR" ? "Check connection/API Key!" : response}</div>`;
     };
 
-    // --- EXAM ENGINE ---
     window.generateQuiz = async () => {
+        const subject = document.getElementById('subject-select').value;
         const status = document.getElementById('exam-status');
         const container = document.getElementById('quiz-container');
         document.getElementById('gen-btn').style.display = 'none';
-        status.innerText = "Connecting to AI... Building your Mock Exam...";
+        status.innerText = `Fetching ${subject} questions...`;
 
-        // Simplified prompt for high reliability
-        const prompt = `Generate 15 JAMB questions across Science and English. 
-        Format strictly as: Question | CorrectAnswer
-        Example: What is the power of a lens measured in?|Dioptres
-        One per line. No numbers.`;
+        const prompt = `Generate 10 advanced JAMB UTME questions for ${subject}. 
+        Format: Question | CorrectAnswer
+        Example: What is the unit of force?|Newton
+        One per line. No numbers or intro text.`;
 
         const raw = await talkToAI(prompt);
-        if(raw === "ERROR_CONNECTION") {
-            status.innerText = "Connection Failed. Check Settings.";
+        if(raw === "ERROR") {
+            status.innerText = "Connection Failed.";
             document.getElementById('gen-btn').style.display = 'block';
             return;
         }
 
         const lines = raw.split('\n').filter(l => l.includes('|'));
-        const dists = ["None", "Depends on heat", "Zero", "Increases", "Decreases", "10", "100", "Initial value"];
+        const fakeDists = ["None", "Zero", "Increases", "Decreases", "100", "Initial state", "Unknown", "Data missing"];
 
         container.innerHTML = lines.map((line, i) => {
             const [q, ans] = line.split('|');
             const correct = ans.trim();
-            // Build random options
             let options = [correct];
             while(options.length < 4) {
-                let d = dists[Math.floor(Math.random() * dists.length)];
+                let d = fakeDists[Math.floor(Math.random() * fakeDists.length)];
                 if(!options.includes(d)) options.push(d);
             }
             options.sort(() => Math.random() - 0.5);
@@ -175,18 +164,15 @@
             return `
                 <div class="q-card">
                     <p><strong>${i+1}.</strong> ${q.trim()}</p>
-                    ${options.map(opt => `
-                        <button class="opt" onclick="window.checkAns(this, '${opt === correct}')">${opt}</button>
-                    `).join('')}
+                    ${options.map(opt => `<button class="opt" onclick="window.checkAns(this, '${opt === correct}')">${opt}</button>`).join('')}
                 </div>
             `;
         }).join('');
-        status.innerText = "Exam Ready!";
+        status.innerText = `${subject} Mock Loaded!`;
     };
 
     window.checkAns = (btn, isCorrect) => {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.opt').forEach(b => b.style.border = '1px solid #30363d');
+        btn.parentElement.querySelectorAll('.opt').forEach(b => b.style.border = '1px solid #30363d');
         btn.style.border = isCorrect === 'true' ? '2px solid #00ff88' : '2px solid #ff4b2b';
         btn.style.background = isCorrect === 'true' ? 'rgba(0,255,136,0.1)' : 'rgba(255,75,43,0.1)';
     };
