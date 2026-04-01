@@ -325,7 +325,7 @@
             <input type="password" id="api-key-input" placeholder="Paste your API key here" style="width:100%; padding:12px; margin-bottom:10px; background:#0d1117; color:white; border-radius:8px;">
             <button class="btn" id="save-api-btn">SAVE KEY</button>
             <p style="font-size:0.7rem; margin-top:10px;">Get your key from <a href="https://aistudio.google.com/" target="_blank" style="color:var(--prim);">Google AI Studio</a></p>
-            <p style="font-size:0.7rem; margin-top:5px;">⚠️ Questions are generated on-demand (1 API call per question). This minimizes quota usage.</p>
+            <p style="font-size:0.7rem; margin-top:5px;">⚡ Using Gemini 2.5 Flash - Questions are generated on-demand (1 API call per question). This minimizes quota usage.</p>
         </div>
     </div>
 </main>
@@ -359,6 +359,9 @@
     // Total questions = 30 per subject (180 total)
     const QUESTIONS_PER_SUBJECT = 30;
     let totalQuestions = 0;
+    
+    // Gemini Model - using 2.5 Flash Preview
+    const GEMINI_MODEL = "gemini-2.5-flash-preview-04-17";
 
     // Debug logging
     function addDebugLog(containerId, message, type = 'info') {
@@ -373,14 +376,14 @@
         while (container.children.length > 100) container.removeChild(container.firstChild);
     }
 
-    // AI Call - generates ONE question at a time
+    // AI Call - generates ONE question at a time using Gemini 2.5 Flash
     async function generateSingleQuestion(subject, questionNumber) {
         if (!apiKey) {
             addDebugLog('exam-debug-logs', `❌ No API key. Please add in Settings.`, 'error');
             return null;
         }
         
-        addDebugLog('exam-debug-logs', `📤 Generating question ${questionNumber + 1} for ${subject}...`, 'info');
+        addDebugLog('exam-debug-logs', `📤 Generating question ${questionNumber + 1} for ${subject} using ${GEMINI_MODEL}...`, 'info');
         
         const prompt = `Generate ONE JAMB (Nigerian) multiple-choice question for ${subject}.
         
@@ -390,20 +393,33 @@
         Example format:
         What is the capital of Nigeria? ||| Correct Answer: Abuja ||| Wrong Options: Lagos ||| Kano ||| Ibadan
         
-        Make the question realistic for JAMB/WAEC level. Return ONLY the formatted response, no extra text.`;
+        Requirements:
+        - Make the question realistic for JAMB/WAEC level
+        - Ensure the correct answer is accurate
+        - Provide 3 plausible wrong options
+        - Return ONLY the formatted response, no extra text or explanation
+        
+        Generate a unique question - don't repeat previous patterns.`;
         
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
             const result = await model.generateContent(prompt);
             const responseText = result.response.text();
             
-            addDebugLog('exam-debug-logs', `✅ Received response for ${subject} Q${questionNumber + 1}`, 'success');
+            addDebugLog('exam-debug-logs', `✅ Received response for ${subject} Q${questionNumber + 1} (${responseText.length} chars)`, 'success');
             
             // Parse the response
-            return parseQuestionResponse(responseText, subject);
+            const parsed = parseQuestionResponse(responseText, subject);
+            if (parsed) {
+                addDebugLog('exam-debug-logs', `📝 Parsed successfully: "${parsed.text.substring(0, 50)}..."`, 'success');
+            }
+            return parsed;
         } catch (e) {
             addDebugLog('exam-debug-logs', `❌ API Error: ${e.message}`, 'error');
+            if (e.message.includes('quota') || e.message.includes('429')) {
+                addDebugLog('exam-debug-logs', `⚠️ Quota limit reached. Please wait a moment and try again.`, 'error');
+            }
             return null;
         }
     }
@@ -414,7 +430,7 @@
             const parts = text.split('|||').map(p => p.trim());
             
             if (parts.length < 4) {
-                addDebugLog('exam-debug-logs', `⚠️ Invalid response format. Using fallback.`, 'error');
+                addDebugLog('exam-debug-logs', `⚠️ Invalid response format. Expected 4+ parts, got ${parts.length}. Using fallback.`, 'error');
                 return getFallbackQuestion(subject);
             }
             
@@ -431,8 +447,13 @@
                 if (opt) wrongOptions.push(opt);
             }
             
+            // Ensure we have exactly 3 wrong options
+            while (wrongOptions.length < 3) {
+                wrongOptions.push(`Option ${String.fromCharCode(65 + wrongOptions.length)} (Distractor)`);
+            }
+            
             // Combine all options
-            let allOptions = [correctAnswer, ...wrongOptions];
+            let allOptions = [correctAnswer, ...wrongOptions.slice(0, 3)];
             
             // Shuffle options
             for (let i = allOptions.length - 1; i > 0; i--) {
@@ -447,8 +468,9 @@
                 text: questionText,
                 options: allOptions,
                 correct: correctIndex,
-                explanation: `The correct answer is "${correctAnswer}". This is a standard ${subject} concept.`,
-                generated: true
+                explanation: `The correct answer is "${correctAnswer}". This is based on standard ${subject} curriculum.`,
+                generated: true,
+                timestamp: new Date().toISOString()
             };
         } catch (e) {
             addDebugLog('exam-debug-logs', `⚠️ Parse error: ${e.message}`, 'error');
@@ -469,7 +491,7 @@
         return {
             subject: subject,
             text: fallbacks[subject] || `${subject} practice question: Choose the correct option.`,
-            options: ["Option A: Correct", "Option B: Incorrect", "Option C: Incorrect", "Option D: Incorrect"],
+            options: ["Option A: Correct answer", "Option B: Distractor 1", "Option C: Distractor 2", "Option D: Distractor 3"],
             correct: 0,
             explanation: `This is a practice question for ${subject}. The correct answer is Option A.`,
             generated: false
@@ -481,6 +503,7 @@
         // Initialize bank for this subject if needed
         if (!questionBank[subject]) {
             questionBank[subject] = [];
+            addDebugLog('exam-debug-logs', `📚 Created question bank for ${subject}`, 'info');
         }
         
         // Check if question already exists
@@ -490,7 +513,9 @@
         }
         
         // Generate new question
+        addDebugLog('exam-debug-logs', `🔄 Generating new question for ${subject} Q${questionNumber + 1}...`, 'info');
         const question = await generateSingleQuestion(subject, questionNumber);
+        
         if (question) {
             questionBank[subject][questionNumber] = question;
             addDebugLog('exam-debug-logs', `💾 Cached question for ${subject} Q${questionNumber + 1}`, 'success');
@@ -498,6 +523,7 @@
         }
         
         // Return fallback if generation failed
+        addDebugLog('exam-debug-logs', `⚠️ Using fallback question for ${subject} Q${questionNumber + 1}`, 'info');
         const fallback = getFallbackQuestion(subject);
         questionBank[subject][questionNumber] = fallback;
         return fallback;
@@ -524,9 +550,12 @@
     }
     
     async function renderQuestion() {
+        const questionArea = document.getElementById('question-area');
+        questionArea.innerHTML = '<div class="q-card"><div class="loading-spinner"></div> Loading question...</div>';
+        
         const q = await getCurrentQuestion();
         if (!q) {
-            document.getElementById('question-area').innerHTML = '<div class="q-card">Loading questions...</div>';
+            questionArea.innerHTML = '<div class="q-card">Error loading question. Please try again.</div>';
             return;
         }
         
@@ -535,17 +564,17 @@
             <div class="q-card">
                 <p><strong>Question ${currentQIndex + 1}/${totalQuestions}</strong><br>
                 <span style="color: var(--prim);">📖 ${q.subject}</span></p>
-                <p style="margin: 15px 0; font-size: 1.1rem;">${q.text}</p>
+                <p style="margin: 15px 0; font-size: 1.1rem; line-height: 1.5;">${q.text}</p>
                 <div class="options-grid">
                     ${q.options.map((opt, idx) => `
                         <button class="opt ${userAnswer === idx ? 'selected' : ''}" 
                                 onclick="window.selectAnswer(${idx})">${String.fromCharCode(65+idx)}. ${opt}</button>
                     `).join('')}
                 </div>
-                ${userAnswer !== null ? `<div style="margin-top: 10px; padding: 8px; background: rgba(0,255,136,0.1); border-radius: 8px;">💡 Explanation: ${q.explanation}</div>` : ''}
+                ${userAnswer !== null ? `<div style="margin-top: 10px; padding: 8px; background: rgba(0,255,136,0.1); border-radius: 8px;">💡 ${q.explanation}</div>` : ''}
             </div>
         `;
-        document.getElementById('question-area').innerHTML = html;
+        questionArea.innerHTML = html;
         updateProgress();
     }
     
@@ -585,12 +614,16 @@
             if (examActive && examTimer > 0) {
                 examTimer--;
                 updateTimerDisplay();
-                if (examTimer === 0) submitExam();
+                if (examTimer === 0) {
+                    addDebugLog('exam-debug-logs', `⏰ Time's up! Auto-submitting exam.`, 'info');
+                    submitExam();
+                }
             }
         }, 1000);
         
         renderQuestion();
         addDebugLog('exam-debug-logs', `🚀 Exam started with subjects: ${selectedSubjects.join(', ')}`, 'success');
+        addDebugLog('exam-debug-logs', `🤖 Using AI model: ${GEMINI_MODEL}`, 'info');
         return true;
     }
     
@@ -626,8 +659,17 @@
         }
         
         const percent = ((score / totalQuestions) * 100).toFixed(1);
-        alert(`🎉 Mock Exam Completed!\nScore: ${score}/${totalQuestions} (${percent}%)\n\nCheck debug console for details.`);
+        alert(`🎉 Mock Exam Completed!\n\nScore: ${score}/${totalQuestions} (${percent}%)\n\nCheck the debug console for detailed logs.`);
         addDebugLog('exam-debug-logs', `📊 FINAL RESULT: ${score}/${totalQuestions} (${percent}%)`, 'success');
+        
+        // Log question generation stats
+        let totalGenerated = 0;
+        for (const subject in questionBank) {
+            const generated = questionBank[subject].filter(q => q && q.generated).length;
+            totalGenerated += generated;
+            addDebugLog('exam-debug-logs', `📊 ${subject}: ${generated} AI-generated questions`, 'info');
+        }
+        addDebugLog('exam-debug-logs', `📊 Total API calls made: ${totalGenerated}`, 'success');
     }
     
     // ---------- CHAT ----------
@@ -650,11 +692,11 @@
         
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-            const result = await model.generateContent(`You are a JAMB tutor. Answer concisely: ${msg}`);
+            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+            const result = await model.generateContent(`You are a JAMB tutor. Answer concisely and helpfully: ${msg}`);
             const reply = result.response.text();
             chatWin.innerHTML += `<div class="bubble ai-bubble">${escapeHtml(reply)}</div>`;
-            addDebugLog('chat-debug-logs', `✅ Chat response received`, 'success');
+            addDebugLog('chat-debug-logs', `✅ Chat response received (${reply.length} chars)`, 'success');
         } catch (e) {
             addDebugLog('chat-debug-logs', `❌ Chat error: ${e.message}`, 'error');
             chatWin.innerHTML += `<div class="bubble ai-bubble">⚠️ Error: ${e.message}</div>`;
@@ -753,7 +795,7 @@
     // Load saved API key
     if (apiKey) document.getElementById('api-key-input').value = apiKey;
     updateCalcScreen();
-    addDebugLog('exam-debug-logs', '✅ Ready. Questions will be generated on-demand as you navigate.', 'success');
+    addDebugLog('exam-debug-logs', `✅ Ready. Using ${GEMINI_MODEL}. Questions will be generated on-demand as you navigate.`, 'success');
 </script>
 </body>
 </html>
