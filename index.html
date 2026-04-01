@@ -433,6 +433,7 @@
             </div>
             <p style="font-size:0.7rem; margin-top:10px;">Get your key from <a href="https://aistudio.google.com/" target="_blank" style="color:var(--prim);">Google AI Studio</a></p>
             <p style="font-size:0.7rem; color: var(--warning);">⚡ Each full exam uses 6 API calls (30 questions per subject). Chat uses 1 call per message.</p>
+            <p style="font-size:0.7rem;">Model: <strong>gemini-1.5-flash</strong></p>
         </div>
     </div>
 </main>
@@ -492,7 +493,7 @@
     let apiCallsToday = parseInt(localStorage.getItem('api_calls_today') || '0');
     let lastResetDate = localStorage.getItem('last_reset_date') || '';
     
-    const GEMINI_MODEL = "gemini-2.0-flash";
+    const GEMINI_MODEL = "gemini-1.5-flash";
     const DAILY_LIMIT = 20;
     
     function checkAndResetQuota() {
@@ -878,7 +879,7 @@
     updateModalCalcScreen();
     checkAndResetQuota();
     updateQuotaDisplay();
-    addDebugLog('exam-debug-logs', `✅ Ready. Daily quota: ${apiCallsToday}/${DAILY_LIMIT} used.`, 'success');
+    addDebugLog('exam-debug-logs', `✅ Ready. Model: ${GEMINI_MODEL}. Daily quota: ${apiCallsToday}/${DAILY_LIMIT} used.`, 'success');
 </script>
 </body>
 </html>
