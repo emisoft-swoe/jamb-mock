@@ -179,9 +179,9 @@
         /* Chat History Sidebar */
         .chat-history-sidebar {
             position: fixed;
-            left: -280px;
+            left: -300px;
             top: 0;
-            width: 280px;
+            width: 300px;
             height: 100%;
             background: var(--card);
             border-right: 1px solid var(--border);
@@ -200,6 +200,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .history-item {
             padding: 12px 15px;
@@ -256,6 +258,15 @@
             display: flex;
             align-items: center;
             margin-bottom: 15px;
+        }
+        .new-chat-btn {
+            background: var(--prim);
+            color: #0d1117;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
         }
         
         .q-card { background: var(--card); border-left: 4px solid var(--prim); padding: 15px; margin-bottom: 15px; border-radius: 6px; }
@@ -435,17 +446,6 @@
             margin-bottom: 15px;
             border-left: 3px solid var(--accent);
             font-style: italic;
-        }
-        
-        .new-chat-btn {
-            background: var(--prim);
-            color: #0d1117;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 10px;
         }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -665,7 +665,7 @@
             // Create default chat
             chatHistories = [{
                 id: Date.now(),
-                title: "New Chat",
+                title: "New Conversation",
                 messages: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -681,14 +681,47 @@
         localStorage.setItem('jamb_chat_histories', JSON.stringify(chatHistories));
     }
 
+    // Generate AI title for a chat based on first few messages
+    async function generateChatTitle(chatId) {
+        const chat = chatHistories.find(c => c.id === chatId);
+        if(!chat || chat.messages.length === 0) return "New Conversation";
+        
+        // Only generate if title is still default
+        if(chat.title !== "New Conversation" && !chat.title.startsWith("Chat")) return;
+        
+        // Get first 2-3 messages to generate title
+        const contextMessages = chat.messages.slice(0, 3);
+        const context = contextMessages.map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.text.substring(0, 200)}`).join('\n');
+        
+        const prompt = `Based on this conversation start, generate a very short, descriptive title (max 5 words). Return ONLY the title, no quotes, no extra text.\n\n${context}`;
+        
+        try {
+            if(apiKey) {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+                const result = await model.generateContent(prompt);
+                let title = result.response.text().trim();
+                // Clean up title
+                title = title.replace(/["']/g, '').substring(0, 40);
+                if(title.length > 5) {
+                    chat.title = title;
+                    saveChatHistories();
+                    renderChatHistoryList();
+                }
+            }
+        } catch(e) {
+            console.log("Could not generate title automatically");
+        }
+    }
+
     function renderChatHistoryList() {
         const container = document.getElementById('chat-history-list');
         if(!container) return;
         
         container.innerHTML = chatHistories.map(chat => `
             <div class="history-item ${currentChatId === chat.id ? 'active' : ''}" onclick="window.switchToChat(${chat.id})">
-                <div class="history-title">${escapeHtml(chat.title || 'New Chat')}</div>
-                <div class="history-preview">${escapeHtml(chat.messages[chat.messages.length-1]?.text?.substring(0, 50) || 'No messages')}</div>
+                <div class="history-title">${escapeHtml(chat.title || 'New Conversation')}</div>
+                <div class="history-preview">${escapeHtml(chat.messages[chat.messages.length-1]?.text?.substring(0, 50) || 'No messages yet')}</div>
                 <div class="history-date">${new Date(chat.updatedAt).toLocaleString()}</div>
                 <button class="delete-chat-btn" onclick="event.stopPropagation(); window.deleteChat(${chat.id})">🗑️ Delete</button>
             </div>
@@ -718,12 +751,11 @@
 
     function formatMarkdown(text) {
         if(!text) return '';
-        // Convert markdown to HTML
         let formatted = text
             .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`{3}([\s\S]*?)`{3}/g, '<pre><code>$1</code></pre>')
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
             .replace(/`(.*?)`/g, '<code>$1</code>')
             .replace(/\n- (.*?)(?=\n|$)/g, '\n• $1')
             .replace(/\n\d+\. (.*?)(?=\n|$)/g, '\n• $1')
@@ -742,7 +774,7 @@
     window.createNewChat = () => {
         const newChat = {
             id: Date.now(),
-            title: `New Chat ${chatHistories.length + 1}`,
+            title: "New Conversation",
             messages: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -773,7 +805,7 @@
         if(confirm("Delete ALL chat histories? This cannot be undone.")) {
             chatHistories = [{
                 id: Date.now(),
-                title: "New Chat",
+                title: "New Conversation",
                 messages: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -1019,9 +1051,6 @@
         if(chat) {
             chat.messages.push(userMsg);
             chat.updatedAt = new Date().toISOString();
-            if(chat.title === 'New Chat' && chat.messages.length === 1) {
-                chat.title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
-            }
             saveChatHistories();
         }
         
@@ -1043,7 +1072,14 @@
         container.scrollTop = container.scrollHeight;
         
         try {
-            const response = await callAI("You are a JAMB/WAEC tutor. Answer concisely and helpfully: " + msg);
+            // Build conversation history for context
+            const conversationHistory = chat.messages.slice(0, -1).map(m => 
+                `${m.role === 'user' ? 'User' : 'Tutor'}: ${m.text}`
+            ).join('\n');
+            
+            const fullPrompt = `You are a JAMB/WAEC tutor. Previous conversation:\n${conversationHistory}\n\nUser: ${msg}\n\nTutor:`;
+            
+            const response = await callAI(fullPrompt);
             const responseText = response === "ERROR" ? "Error: Check API Key or Internet." : response;
             
             // Remove typing indicator
@@ -1061,6 +1097,11 @@
                 chat.messages.push({ role: 'ai', text: responseText, timestamp: new Date().toISOString() });
                 chat.updatedAt = new Date().toISOString();
                 saveChatHistories();
+                
+                // Generate title if this is the first exchange
+                if(chat.messages.length <= 2) {
+                    generateChatTitle(currentChatId);
+                }
             }
             renderChatHistoryList();
         } catch(e) {
