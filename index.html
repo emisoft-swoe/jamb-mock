@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JAMB AI ELITE | Gemini 2.5 Flash - Full Features</title>
+    <title>JAMB AI ELITE | Gemini 2.5 Flash - Full Analysis</title>
     <style>
         :root {
             --bg: #0a0c10;
@@ -352,8 +352,8 @@
             border-radius: 20px;
             padding: 20px;
             width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
+            max-width: 800px;
+            max-height: 85vh;
             overflow-y: auto;
         }
         .modal-calc-screen {
@@ -389,6 +389,22 @@
         }
         .result-correct { border-left-color: var(--prim); }
         .result-wrong { border-left-color: var(--danger); }
+        
+        .option-analysis {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        .option-item {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        .option-item:last-child { border-bottom: none; }
+        .correct-option { color: var(--prim); font-weight: bold; }
+        .wrong-option { color: var(--danger); }
+        .user-selected { background: rgba(255,255,255,0.05); border-radius: 4px; padding-left: 8px; }
         
         .saved-exam-item {
             background: var(--card);
@@ -476,6 +492,21 @@
             margin-bottom: 15px;
             text-align: center;
         }
+        
+        .loading-analysis {
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border);
+            border-top-color: var(--prim);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -679,7 +710,7 @@
 <div id="results-modal" class="modal">
     <div class="modal-content">
         <div id="results-score" style="text-align:center; font-size:1.5rem; margin-bottom:15px;"></div>
-        <div id="results-details" style="max-height: 50vh; overflow-y: auto;"></div>
+        <div id="results-details" style="max-height: 60vh; overflow-y: auto;"></div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button class="btn" id="save-results-btn" onclick="window.saveResults()">💾 Save Results</button>
             <button class="btn btn-secondary" id="close-results-modal">Close</button>
@@ -696,7 +727,7 @@
 
     // ============================================================
     // JAMB PREP APP - GOOGLE GEMINI 2.5 FLASH EDITION
-    // Using the EXACT model from your code: gemini-2.5-flash
+    // NEW: AI analyzes EVERY option (A, B, C, D) after submission
     // localStorage keys: jamb_key_2026, jamb_saved_exams, jamb_chat_histories, theme
     // ============================================================
     
@@ -1044,7 +1075,7 @@
         await sendChatWithContext(msg);
     };
     
-    // GEMINI 2.5 FLASH API - EXACT MODEL FROM YOUR CODE
+    // GEMINI 2.5 FLASH API
     async function callGeminiAPIWithSimulatedStreaming(prompt, onChunk, onComplete, onError) {
         if (!apiKey) {
             onError("Please set your Gemini API key in Settings");
@@ -1078,6 +1109,55 @@
         const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
         const result = await model.generateContent(prompt);
         return result.response.text();
+    }
+    
+    // NEW: AI analyzes each option for a question
+    async function analyzeOptions(questionText, options, correctAnswer, userAnswer, subject) {
+        const prompt = `As a JAMB/WAEC examiner, analyze this ${subject} question and provide a detailed breakdown of EACH option.
+        
+        Question: "${questionText}"
+        Options:
+        A) ${options[0]}
+        B) ${options[1]}
+        C) ${options[2]}
+        D) ${options[3]}
+        
+        Correct Answer: ${correctAnswer}
+        User Selected: ${userAnswer || "Not answered"}
+        
+        Return a JSON object with this EXACT format (no other text):
+        {
+            "optionsAnalysis": {
+                "A": "Explain why option A is correct or wrong (2-3 sentences)",
+                "B": "Explain why option B is correct or wrong (2-3 sentences)",
+                "C": "Explain why option C is correct or wrong (2-3 sentences)",
+                "D": "Explain why option D is correct or wrong (2-3 sentences)"
+            },
+            "summaryTip": "A helpful study tip for this topic (1 sentence)"
+        }
+        
+        Make explanations educational and helpful for Nigerian students.`;
+        
+        try {
+            const response = await callGeminiAPINonStream(prompt);
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            if(jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+            }
+        } catch(e) {
+            console.log("Analysis parsing error:", e);
+        }
+        
+        // Fallback if AI fails
+        return {
+            optionsAnalysis: {
+                A: options[0] === correctAnswer ? "✓ This is the correct answer. " + (options[0] === correctAnswer ? "Study this concept well." : "") : "✗ This option is incorrect. The correct answer is " + correctAnswer,
+                B: options[1] === correctAnswer ? "✓ This is the correct answer. " : "✗ This option is incorrect.",
+                C: options[2] === correctAnswer ? "✓ This is the correct answer. " : "✗ This option is incorrect.",
+                D: options[3] === correctAnswer ? "✓ This is the correct answer. " : "✗ This option is incorrect."
+            },
+            summaryTip: "Review past questions on this topic for better understanding."
+        };
     }
     
     function resetTimerDisplay() {
@@ -1374,21 +1454,40 @@
         let score = 0;
         const results = [];
         
+        // Show loading in modal
+        const modalContent = document.getElementById('results-details');
+        modalContent.innerHTML = '<div class="loading-analysis"><div class="loading-spinner"></div><div>🤖 AI is analyzing each option...</div></div>';
+        document.getElementById('results-modal').classList.add('active');
+        
         for(let i = 0; i < currentQuestions.length; i++) {
             const q = currentQuestions[i];
             const selectedIndex = userAnswers[i];
-            const isCorrect = selectedIndex === q.correctIndex;
+            const selectedAnswer = selectedIndex !== null ? q.options[selectedIndex] : null;
+            const isCorrect = selectedAnswer === q.correctAnswer;
             if(isCorrect) score++;
+            
+            // Get AI analysis for each option
+            let optionAnalysis = null;
+            try {
+                optionAnalysis = await analyzeOptions(q.text, q.options, q.correctAnswer, selectedAnswer, q.subject);
+            } catch(e) {
+                console.log("Analysis failed for question", i);
+            }
             
             results.push({
                 number: i + 1,
                 question: q.text,
-                selectedAnswer: selectedIndex !== null ? q.options[selectedIndex] : "Not answered",
+                selectedAnswer: selectedAnswer || "Not answered",
                 correctAnswer: q.correctAnswer,
                 explanation: q.explanation,
                 isCorrect: isCorrect,
-                passage: q.passage
+                passage: q.passage,
+                options: q.options,
+                optionAnalysis: optionAnalysis
             });
+            
+            // Update progress
+            modalContent.innerHTML = `<div class="loading-analysis"><div class="loading-spinner"></div><div>🤖 Analyzing question ${i+1}/${currentQuestions.length}...</div></div>`;
         }
         
         const percent = ((score / currentQuestions.length) * 100).toFixed(1);
@@ -1403,19 +1502,40 @@
         
         document.getElementById('results-score').innerHTML = `📊 Score: ${score}/${currentQuestions.length} (${percent}%)`;
         
-        const detailsHtml = results.map(r => `
-            <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
-                <strong>Q${r.number}</strong><br>
-                ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
-                ${formatMarkdown(escapeHtml(r.question))}<br>
-                <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
-                ✅ Correct: ${escapeHtml(r.correctAnswer)}<br>
-                💡 ${escapeHtml(r.explanation)}
-            </div>
-        `).join('');
+        const detailsHtml = results.map(r => {
+            const analysis = r.optionAnalysis;
+            const optionsHtml = analysis ? `
+                <div class="option-analysis">
+                    <strong>🔍 Detailed Option Analysis:</strong>
+                    <div class="option-item ${r.correctAnswer === r.options[0] ? 'correct-option' : 'wrong-option'}">
+                        A) ${escapeHtml(r.options[0])} — ${escapeHtml(analysis.optionsAnalysis?.A || 'Review this option carefully.')}
+                    </div>
+                    <div class="option-item ${r.correctAnswer === r.options[1] ? 'correct-option' : 'wrong-option'}">
+                        B) ${escapeHtml(r.options[1])} — ${escapeHtml(analysis.optionsAnalysis?.B || 'Review this option carefully.')}
+                    </div>
+                    <div class="option-item ${r.correctAnswer === r.options[2] ? 'correct-option' : 'wrong-option'}">
+                        C) ${escapeHtml(r.options[2])} — ${escapeHtml(analysis.optionsAnalysis?.C || 'Review this option carefully.')}
+                    </div>
+                    <div class="option-item ${r.correctAnswer === r.options[3] ? 'correct-option' : 'wrong-option'}">
+                        D) ${escapeHtml(r.options[3])} — ${escapeHtml(analysis.optionsAnalysis?.D || 'Review this option carefully.')}
+                    </div>
+                    ${analysis.summaryTip ? `<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);"><strong>💡 Study Tip:</strong> ${escapeHtml(analysis.summaryTip)}</div>` : ''}
+                </div>
+            ` : `<div class="option-analysis"><em>Option analysis not available. The correct answer is: ${escapeHtml(r.correctAnswer)}</em></div>`;
+            
+            return `
+                <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
+                    <strong>Q${r.number}</strong><br>
+                    ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
+                    ${formatMarkdown(escapeHtml(r.question))}<br>
+                    <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
+                    ✅ Correct answer: ${escapeHtml(r.correctAnswer)}<br>
+                    ${optionsHtml}
+                </div>
+            `;
+        }).join('');
         
         document.getElementById('results-details').innerHTML = detailsHtml;
-        document.getElementById('results-modal').classList.add('active');
         
         renderQuestions();
     };
@@ -1464,16 +1584,38 @@
         
         document.getElementById('results-score').innerHTML = `📊 ${escapeHtml(exam.subject)}<br>${escapeHtml(exam.date)}<br>Score: ${exam.score}/${exam.total} (${exam.percent}%)`;
         
-        const detailsHtml = exam.results.map(r => `
-            <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
-                <strong>Q${r.number}</strong><br>
-                ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
-                ${formatMarkdown(escapeHtml(r.question))}<br>
-                <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
-                ✅ Correct: ${escapeHtml(r.correctAnswer)}<br>
-                💡 ${escapeHtml(r.explanation)}
-            </div>
-        `).join('');
+        const detailsHtml = exam.results.map(r => {
+            const analysis = r.optionAnalysis;
+            const optionsHtml = analysis ? `
+                <div class="option-analysis">
+                    <strong>🔍 Detailed Option Analysis:</strong>
+                    <div class="option-item ${r.correctAnswer === r.options?.[0] ? 'correct-option' : 'wrong-option'}">
+                        A) ${escapeHtml(r.options?.[0] || 'N/A')} — ${escapeHtml(analysis.optionsAnalysis?.A || 'Review this option.')}
+                    </div>
+                    <div class="option-item ${r.correctAnswer === r.options?.[1] ? 'correct-option' : 'wrong-option'}">
+                        B) ${escapeHtml(r.options?.[1] || 'N/A')} — ${escapeHtml(analysis.optionsAnalysis?.B || 'Review this option.')}
+                    </div>
+                    <div class="option-item ${r.correctAnswer === r.options?.[2] ? 'correct-option' : 'wrong-option'}">
+                        C) ${escapeHtml(r.options?.[2] || 'N/A')} — ${escapeHtml(analysis.optionsAnalysis?.C || 'Review this option.')}
+                    </div>
+                    <div class="option-item ${r.correctAnswer === r.options?.[3] ? 'correct-option' : 'wrong-option'}">
+                        D) ${escapeHtml(r.options?.[3] || 'N/A')} — ${escapeHtml(analysis.optionsAnalysis?.D || 'Review this option.')}
+                    </div>
+                    ${analysis.summaryTip ? `<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);"><strong>💡 Study Tip:</strong> ${escapeHtml(analysis.summaryTip)}</div>` : ''}
+                </div>
+            ` : '';
+            
+            return `
+                <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
+                    <strong>Q${r.number}</strong><br>
+                    ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
+                    ${formatMarkdown(escapeHtml(r.question))}<br>
+                    <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
+                    ✅ Correct answer: ${escapeHtml(r.correctAnswer)}<br>
+                    ${optionsHtml}
+                </div>
+            `;
+        }).join('');
         
         document.getElementById('results-details').innerHTML = detailsHtml;
         document.getElementById('results-modal').classList.add('active');
