@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JAMB AI ELITE | Google Gemini - Full Features</title>
+    <title>JAMB AI ELITE | Gemini 2.5 Flash - Full Features</title>
     <style>
         :root {
             --bg: #0a0c10;
             --card: #161b22;
             --prim: #00ff88;
+            --prim-dark: #00cc6a;
             --accent: #58a6ff;
             --text: #f0f6fc;
             --danger: #ff4b2b;
@@ -19,13 +20,19 @@
         [data-theme="light"] {
             --bg: #f0f4f8;
             --card: #ffffff;
-            --prim: #059669;
-            --accent: #3b82f6;
             --text: #1f2937;
             --danger: #dc2626;
             --warning: #d97706;
             --border: #e2e8f0;
         }
+        
+        .theme-blue { --prim: #3b82f6; --prim-dark: #2563eb; }
+        .theme-purple { --prim: #8b5cf6; --prim-dark: #7c3aed; }
+        .theme-orange { --prim: #f97316; --prim-dark: #ea580c; }
+        .theme-red { --prim: #ef4444; --prim-dark: #dc2626; }
+        .theme-teal { --prim: #14b8a6; --prim-dark: #0d9488; }
+        .theme-pink { --prim: #ec4899; --prim-dark: #db2777; }
+        .theme-green { --prim: #00ff88; --prim-dark: #00cc6a; }
         
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         
@@ -166,20 +173,21 @@
         .regenerate-btn { background: var(--prim); color: #0d1117; }
         .delete-msg-btn { background: var(--danger); color: white; }
         .edit-msg-btn { background: var(--accent); color: white; }
+        .copy-msg-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); }
         
-        /* Markdown styling for AI responses */
-        .ai-bubble strong, .ai-bubble b { font-weight: bold; color: var(--prim); }
-        .ai-bubble em, .ai-bubble i { font-style: italic; }
-        .ai-bubble ul, .ai-bubble ol { margin: 8px 0 8px 20px; }
-        .ai-bubble li { margin: 4px 0; }
-        .ai-bubble code {
+        /* Markdown styling for AI responses AND questions */
+        .ai-bubble strong, .ai-bubble b, .q-card strong, .q-card b { font-weight: bold; color: var(--prim); }
+        .ai-bubble em, .ai-bubble i, .q-card em, .q-card i { font-style: italic; }
+        .ai-bubble ul, .ai-bubble ol, .q-card ul, .q-card ol { margin: 8px 0 8px 20px; }
+        .ai-bubble li, .q-card li { margin: 4px 0; }
+        .ai-bubble code, .q-card code {
             background: rgba(0,0,0,0.3);
             padding: 2px 6px;
             border-radius: 4px;
             font-family: monospace;
             font-size: 0.85em;
         }
-        .ai-bubble pre {
+        .ai-bubble pre, .q-card pre {
             background: rgba(0,0,0,0.3);
             padding: 10px;
             border-radius: 8px;
@@ -187,17 +195,6 @@
             font-family: monospace;
             font-size: 0.85em;
         }
-        .copy-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            border-radius: 5px;
-            padding: 2px 8px;
-            font-size: 10px;
-            cursor: pointer;
-            color: var(--text);
-            margin-left: 8px;
-        }
-        .copy-btn:hover { background: rgba(255,255,255,0.2); }
 
         /* Chat History Sidebar */
         .chat-history-sidebar {
@@ -413,13 +410,21 @@
         }
         
         .settings-group { margin-bottom: 20px; }
-        .theme-btn {
+        .theme-btn, .color-btn {
             background: var(--bg);
             border: 1px solid var(--border);
             padding: 10px;
             border-radius: 8px;
             cursor: pointer;
             margin-right: 10px;
+        }
+        .color-preview {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
         }
         
         .progress-badge {
@@ -606,7 +611,7 @@
     <div id="chat" class="screen">
         <div class="chat-header">
             <button class="menu-btn" onclick="window.toggleChatHistory()" style="margin-right:10px;">☰</button>
-            <h3 style="margin:0;">🤖 Google Gemini AI Tutor</h3>
+            <h3 style="margin:0;">🤖 Gemini 2.5 Flash AI Tutor</h3>
         </div>
         <div id="exam-active-warning" style="display:none;" class="exam-warning">
             ⚠️ An exam is currently in progress. Please finish or submit your exam before chatting with the AI.
@@ -619,19 +624,30 @@
             <h3>🔑 Google Gemini API Settings</h3>
             <input type="password" id="api-key-input" placeholder="Paste Gemini API Key Here (starts with AIza...)" style="width:100%; margin-bottom:15px; background:var(--bg); color:var(--text); border:1px solid var(--border); padding:12px; border-radius:8px;">
             <button class="btn" id="save-api-btn" onclick="window.saveKey()">💾 SAVE KEY</button>
-            <p style="font-size: 0.7rem; margin-top: 10px;">Get your free API key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--prim);">aistudio.google.com/apikey</a><br>Free tier: 50-250 requests/day, 1M token context</p>
+            <p style="font-size: 0.7rem; margin-top: 10px;">Get your free API key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--prim);">aistudio.google.com/apikey</a><br>Using model: <strong>gemini-2.5-flash</strong> (Free tier: 50-250 requests/day)</p>
         </div>
         <div class="glass-card">
-            <h3>🎨 Theme</h3>
+            <h3>🎨 Theme Settings</h3>
             <div class="settings-group">
+                <label><strong>Theme Mode:</strong></label><br>
                 <button class="theme-btn" onclick="window.setTheme('dark')">🌙 Dark</button>
                 <button class="theme-btn" onclick="window.setTheme('light')">☀️ Light</button>
+            </div>
+            <div class="settings-group">
+                <label><strong>Primary Color:</strong></label><br>
+                <button class="color-btn" onclick="window.setPrimaryColor('green')"><span class="color-preview" style="background:#00ff88;"></span> Green</button>
+                <button class="color-btn" onclick="window.setPrimaryColor('blue')"><span class="color-preview" style="background:#3b82f6;"></span> Blue</button>
+                <button class="color-btn" onclick="window.setPrimaryColor('purple')"><span class="color-preview" style="background:#8b5cf6;"></span> Purple</button>
+                <button class="color-btn" onclick="window.setPrimaryColor('orange')"><span class="color-preview" style="background:#f97316;"></span> Orange</button>
+                <button class="color-btn" onclick="window.setPrimaryColor('red')"><span class="color-preview" style="background:#ef4444;"></span> Red</button>
+                <button class="color-btn" onclick="window.setPrimaryColor('teal')"><span class="color-preview" style="background:#14b8a6;"></span> Teal</button>
+                <button class="color-btn" onclick="window.setPrimaryColor('pink')"><span class="color-preview" style="background:#ec4899;"></span> Pink</button>
             </div>
         </div>
         <div class="glass-card">
             <h3>📊 Status</h3>
-            <span>Model: gemini-2.0-flash-exp</span>
-            <p style="font-size: 0.7rem; color: var(--warning);">Free tier: 250 requests/day</p>
+            <span>Model: <strong>gemini-2.5-flash</strong></span>
+            <p style="font-size: 0.7rem; color: var(--warning);">Free tier: 50-250 requests/day</p>
             <button class="btn-secondary" onclick="window.clearAllChats()" style="margin-top:10px;">🗑️ Clear All Chat History</button>
         </div>
     </div>
@@ -671,19 +687,21 @@
     </div>
 </div>
 
+<script type="importmap">
+    { "imports": { "@google/generative-ai": "https://esm.run/@google/generative-ai" } }
+</script>
+
 <script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
     // ============================================================
-    // JAMB PREP APP - GOOGLE GEMINI EDITION
-    // Features:
-    // 1. After exam submission, answers cannot be changed
-    // 2. AI chat blocked during active exam
-    // 3. Streaming chat responses (word-by-word)
-    // 4. Regenerate, edit, delete individual messages
-    // 5. Full conversation memory
-    // 6. Free tier: 250 requests/day with Gemini 2.0 Flash
+    // JAMB PREP APP - GOOGLE GEMINI 2.5 FLASH EDITION
+    // Using the EXACT model from your code: gemini-2.5-flash
+    // localStorage keys: jamb_key_2026, jamb_saved_exams, jamb_chat_histories, theme
     // ============================================================
     
-    let apiKey = localStorage.getItem('gemini_key_2026') || '';
+    let apiKey = localStorage.getItem('jamb_key_2026') || '';
+    const GEMINI_MODEL = "gemini-2.5-flash";
     let currentQuestions = [];
     let userAnswers = [];
     let examTimer = null;
@@ -700,20 +718,27 @@
     let chatHistories = [];
     let currentChatId = null;
     let isGenerating = false;
+    let nextChatNumber = 1;
 
-    // Load chat histories from localStorage
+    // Load chat histories from localStorage (using your original key)
     function loadChatHistories() {
-        const saved = localStorage.getItem('gemini_chat_histories');
+        const saved = localStorage.getItem('jamb_chat_histories');
         if(saved) {
             chatHistories = JSON.parse(saved);
+            const numbers = chatHistories.map(c => {
+                const match = c.title.match(/Chat (\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            });
+            nextChatNumber = Math.max(0, ...numbers) + 1;
         } else {
             chatHistories = [{
                 id: Date.now(),
-                title: "New Conversation",
+                title: "Chat 1",
                 messages: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             }];
+            nextChatNumber = 2;
             saveChatHistories();
         }
         currentChatId = chatHistories[0]?.id || null;
@@ -722,33 +747,21 @@
     }
 
     function saveChatHistories() {
-        localStorage.setItem('gemini_chat_histories', JSON.stringify(chatHistories));
+        localStorage.setItem('jamb_chat_histories', JSON.stringify(chatHistories));
     }
 
-    async function generateChatTitle(chatId) {
-        const chat = chatHistories.find(c => c.id === chatId);
-        if(!chat || chat.messages.length === 0) return;
-        if(chat.title !== "New Conversation" && !chat.title.startsWith("Chat")) return;
-        
-        const contextMessages = chat.messages.slice(0, 3);
-        const context = contextMessages.map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.text.substring(0, 200)}`).join('\n');
-        
-        const prompt = `Based on this conversation start, generate a very short, descriptive title (max 5 words). Return ONLY the title, no quotes, no extra text.\n\n${context}`;
-        
-        try {
-            if(apiKey) {
-                const response = await callGeminiAPINonStream(prompt);
-                let title = response.trim();
-                title = title.replace(/["']/g, '').substring(0, 40);
-                if(title.length > 5) {
-                    chat.title = title;
-                    saveChatHistories();
-                    renderChatHistoryList();
-                }
-            }
-        } catch(e) {
-            console.log("Could not generate title automatically");
-        }
+    function formatMarkdown(text) {
+        if(!text) return '';
+        let formatted = text
+            .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n- (.*?)(?=\n|$)/g, '\n• $1')
+            .replace(/\n\d+\. (.*?)(?=\n|$)/g, '\n• $1')
+            .replace(/\n/g, '<br>');
+        return formatted;
     }
 
     function renderChatHistoryList() {
@@ -757,7 +770,7 @@
         
         container.innerHTML = chatHistories.map(chat => `
             <div class="history-item ${currentChatId === chat.id ? 'active' : ''}" onclick="window.switchToChat(${chat.id})">
-                <div class="history-title">${escapeHtml(chat.title || 'New Conversation')}</div>
+                <div class="history-title">${escapeHtml(chat.title || 'Chat')}</div>
                 <div class="history-preview">${escapeHtml(chat.messages[chat.messages.length-1]?.text?.substring(0, 50) || 'No messages yet')}</div>
                 <div class="history-date">${new Date(chat.updatedAt).toLocaleString()}</div>
                 <button class="delete-chat-btn" onclick="event.stopPropagation(); window.deleteChat(${chat.id})">🗑️ Delete</button>
@@ -787,89 +800,28 @@
         
         if(msg.role === 'ai') {
             bubble.innerHTML = formatMarkdown(msg.text);
-            const actions = document.createElement('div');
-            actions.className = 'message-actions';
+        } else {
+            bubble.innerHTML = escapeHtml(msg.text);
+        }
+        
+        const actions = document.createElement('div');
+        actions.className = 'message-actions';
+        
+        if(msg.role === 'ai') {
             actions.innerHTML = `
-                <button class="msg-action-btn copy-btn" onclick="window.copyMessageText(this)">📋 Copy</button>
+                <button class="msg-action-btn copy-msg-btn" onclick="window.copyMessageText(this)">📋 Copy</button>
                 <button class="msg-action-btn regenerate-btn" onclick="window.regenerateMessage(${msgIndex})">🔄 Regenerate</button>
                 <button class="msg-action-btn delete-msg-btn" onclick="window.deleteMessage(${msgIndex})">🗑️</button>
             `;
-            bubble.appendChild(actions);
         } else {
-            bubble.innerHTML = escapeHtml(msg.text);
-            const actions = document.createElement('div');
-            actions.className = 'message-actions';
             actions.innerHTML = `
-                <button class="msg-action-btn copy-btn" onclick="window.copyMessageText(this)">📋 Copy</button>
+                <button class="msg-action-btn copy-msg-btn" onclick="window.copyMessageText(this)">📋 Copy</button>
                 <button class="msg-action-btn edit-msg-btn" onclick="window.editMessage(${msgIndex})">✏️ Edit</button>
                 <button class="msg-action-btn delete-msg-btn" onclick="window.deleteMessage(${msgIndex})">🗑️</button>
             `;
-            bubble.appendChild(actions);
         }
+        bubble.appendChild(actions);
         return bubble;
-    }
-
-    function formatMarkdown(text) {
-        if(!text) return '';
-        let formatted = text
-            .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            .replace(/\n- (.*?)(?=\n|$)/g, '\n• $1')
-            .replace(/\n\d+\. (.*?)(?=\n|$)/g, '\n• $1')
-            .replace(/\n/g, '<br>');
-        return formatted;
-    }
-
-    // Non-streaming API call for title generation and exam questions
-    async function callGeminiAPINonStream(prompt) {
-        if (!apiKey) throw new Error("Please set your Gemini API key in Settings");
-        
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || `API Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
-    }
-
-    // Gemini does not support native streaming like OpenAI/Mistral
-    // We simulate streaming by making the request and then animating the text
-    async function callGeminiAPIWithSimulatedStreaming(prompt, onChunk, onComplete, onError) {
-        if (!apiKey) {
-            onError("Please set your Gemini API key in Settings");
-            return;
-        }
-        
-        try {
-            const fullResponse = await callGeminiAPINonStream(prompt);
-            
-            // Simulate streaming by gradually revealing the text
-            let currentText = "";
-            const words = fullResponse.split(' ');
-            
-            for (let i = 0; i < words.length; i++) {
-                currentText += (i === 0 ? words[i] : ' ' + words[i]);
-                onChunk(currentText);
-                await new Promise(resolve => setTimeout(resolve, 30)); // Smooth typing effect
-            }
-            onComplete(fullResponse);
-        } catch (error) {
-            onError(error.message);
-        }
     }
 
     window.switchToChat = (chatId) => {
@@ -883,11 +835,12 @@
     window.createNewChat = () => {
         const newChat = {
             id: Date.now(),
-            title: "New Conversation",
+            title: `Chat ${nextChatNumber}`,
             messages: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
+        nextChatNumber++;
         chatHistories.unshift(newChat);
         currentChatId = newChat.id;
         saveChatHistories();
@@ -951,21 +904,26 @@
 
     window.copyMessageText = (btn) => {
         const bubble = btn.closest('.bubble');
-        const text = bubble.innerText.replace(/[📋 Copy🔄 Regenerate✏️ Edit🗑️]/g, '').trim();
+        const clone = bubble.cloneNode(true);
+        const actions = clone.querySelector('.message-actions');
+        if(actions) actions.remove();
+        const text = clone.innerText.trim();
         navigator.clipboard.writeText(text);
+        const originalText = btn.innerText;
         btn.innerText = '✓';
-        setTimeout(() => btn.innerText = '📋 Copy', 1500);
+        setTimeout(() => btn.innerText = originalText, 1500);
     };
 
     window.clearAllChats = () => {
         if(confirm("Delete ALL chat histories? This cannot be undone.")) {
             chatHistories = [{
                 id: Date.now(),
-                title: "New Conversation",
+                title: "Chat 1",
                 messages: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             }];
+            nextChatNumber = 2;
             currentChatId = chatHistories[0].id;
             saveChatHistories();
             renderChatHistoryList();
@@ -1036,7 +994,7 @@
             fullPrompt,
             (partialText) => {
                 accumulatedText = partialText;
-                streamingBubble.innerHTML = formatMarkdown(accumulatedText) + `<button class="msg-action-btn copy-btn" onclick="window.copyMessageText(this)">📋 Copy</button>`;
+                streamingBubble.innerHTML = formatMarkdown(accumulatedText);
                 container.scrollTop = container.scrollHeight;
             },
             (finalText) => {
@@ -1044,7 +1002,7 @@
                 const actions = document.createElement('div');
                 actions.className = 'message-actions';
                 actions.innerHTML = `
-                    <button class="msg-action-btn copy-btn" onclick="window.copyMessageText(this)">📋 Copy</button>
+                    <button class="msg-action-btn copy-msg-btn" onclick="window.copyMessageText(this)">📋 Copy</button>
                     <button class="msg-action-btn regenerate-btn" onclick="window.regenerateMessage(${chat.messages.length})">🔄 Regenerate</button>
                     <button class="msg-action-btn delete-msg-btn" onclick="window.deleteMessage(${chat.messages.length})">🗑️</button>
                 `;
@@ -1054,10 +1012,6 @@
                 chat.updatedAt = new Date().toISOString();
                 saveChatHistories();
                 renderChatHistoryList();
-                
-                if(chat.messages.length <= 2) {
-                    generateChatTitle(currentChatId);
-                }
             },
             (error) => {
                 streamingBubble.innerHTML = `❌ Error: ${error}`;
@@ -1089,6 +1043,42 @@
         
         await sendChatWithContext(msg);
     };
+    
+    // GEMINI 2.5 FLASH API - EXACT MODEL FROM YOUR CODE
+    async function callGeminiAPIWithSimulatedStreaming(prompt, onChunk, onComplete, onError) {
+        if (!apiKey) {
+            onError("Please set your Gemini API key in Settings");
+            return;
+        }
+        
+        try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+            const result = await model.generateContent(prompt);
+            const fullResponse = result.response.text();
+            
+            let currentText = "";
+            const words = fullResponse.split(' ');
+            
+            for (let i = 0; i < words.length; i++) {
+                currentText += (i === 0 ? words[i] : ' ' + words[i]);
+                onChunk(currentText);
+                await new Promise(resolve => setTimeout(resolve, 25));
+            }
+            onComplete(fullResponse);
+        } catch (error) {
+            onError(error.message);
+        }
+    }
+    
+    async function callGeminiAPINonStream(prompt) {
+        if (!apiKey) throw new Error("Please set your Gemini API key in Settings");
+        
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+    }
     
     function resetTimerDisplay() {
         document.getElementById('exam-timer').innerHTML = '00:00';
@@ -1150,7 +1140,7 @@
         currentNumQuestions = 180;
         
         const content = document.getElementById('exam-content');
-        content.innerHTML = `<div class="glass-card">⏳ Generating 180 JAMB questions with Gemini AI...<br><small>This may take 30-60 seconds</small></div>`;
+        content.innerHTML = `<div class="glass-card">⏳ Generating 180 JAMB questions with Gemini 2.5 Flash...<br><small>This may take 30-60 seconds</small></div>`;
         window.showScreen('exam');
         
         let allQuestions = [];
@@ -1203,7 +1193,7 @@
         currentSubject = `${subject} - ${topic || "General"} (${difficulty})`;
         
         const content = document.getElementById('exam-content');
-        content.innerHTML = `<div class="glass-card">⏳ Generating ${numQuestions} ${subject} questions with Gemini AI...</div>`;
+        content.innerHTML = `<div class="glass-card">⏳ Generating ${numQuestions} ${subject} questions with Gemini 2.5 Flash...</div>`;
         window.showScreen('exam');
 
         try {
@@ -1277,7 +1267,7 @@
 
     window.saveKey = () => {
         const val = document.getElementById('api-key-input').value.trim();
-        if(val) { apiKey = val; localStorage.setItem('gemini_key_2026', val); alert("Gemini API Key Saved!"); }
+        if(val) { apiKey = val; localStorage.setItem('jamb_key_2026', val); alert("Gemini API Key Saved!"); }
     };
     
     window.setTheme = (theme) => {
@@ -1285,8 +1275,19 @@
         localStorage.setItem('theme', theme);
     };
     
+    window.setPrimaryColor = (color) => {
+        document.body.classList.remove('theme-blue', 'theme-purple', 'theme-orange', 'theme-red', 'theme-teal', 'theme-pink', 'theme-green');
+        document.body.classList.add(`theme-${color}`);
+        localStorage.setItem('primary_color', color);
+    };
+    
     const savedTheme = localStorage.getItem('theme');
     if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    const savedColor = localStorage.getItem('primary_color');
+    if(savedColor && savedColor !== 'green') {
+        document.body.classList.add(`theme-${savedColor}`);
+    }
     
     function escapeHtml(str) {
         if(!str) return '';
@@ -1343,7 +1344,7 @@
         content.innerHTML = currentQuestions.map((q, i) => `
             <div class="q-card" data-qid="${i}">
                 ${q.passage ? `<div class="passage-text">📖 <strong>Passage:</strong><br>${escapeHtml(q.passage)}</div>` : ''}
-                <p><b>${i+1}.</b> ${escapeHtml(q.text)}</p>
+                <p><b>${i+1}.</b> ${formatMarkdown(escapeHtml(q.text))}</p>
                 ${q.options.map((opt, idx) => `
                     <button class="opt ${userAnswers[i] === idx ? 'selected' : ''} ${examSubmitted ? 'disabled' : ''}" 
                             data-optidx="${idx}" 
@@ -1406,7 +1407,7 @@
             <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
                 <strong>Q${r.number}</strong><br>
                 ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
-                ${escapeHtml(r.question)}<br>
+                ${formatMarkdown(escapeHtml(r.question))}<br>
                 <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
                 ✅ Correct: ${escapeHtml(r.correctAnswer)}<br>
                 💡 ${escapeHtml(r.explanation)}
@@ -1422,10 +1423,10 @@
     window.saveResults = () => {
         if(!currentResults) return;
         
-        let savedExams = localStorage.getItem('gemini_saved_exams');
+        let savedExams = localStorage.getItem('jamb_saved_exams');
         savedExams = savedExams ? JSON.parse(savedExams) : [];
         savedExams.unshift(currentResults);
-        localStorage.setItem('gemini_saved_exams', JSON.stringify(savedExams));
+        localStorage.setItem('jamb_saved_exams', JSON.stringify(savedExams));
         alert("✅ Results saved successfully!");
         document.getElementById('results-modal').classList.remove('active');
         loadSavedExams();
@@ -1433,7 +1434,7 @@
     
     function loadSavedExams() {
         const container = document.getElementById('saved-exams-list');
-        let savedExams = localStorage.getItem('gemini_saved_exams');
+        let savedExams = localStorage.getItem('jamb_saved_exams');
         savedExams = savedExams ? JSON.parse(savedExams) : [];
         
         if(savedExams.length === 0) {
@@ -1457,7 +1458,7 @@
     }
     
     window.viewSavedExam = (idx) => {
-        let savedExams = localStorage.getItem('gemini_saved_exams');
+        let savedExams = localStorage.getItem('jamb_saved_exams');
         savedExams = savedExams ? JSON.parse(savedExams) : [];
         const exam = savedExams[idx];
         
@@ -1467,7 +1468,7 @@
             <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
                 <strong>Q${r.number}</strong><br>
                 ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
-                ${escapeHtml(r.question)}<br>
+                ${formatMarkdown(escapeHtml(r.question))}<br>
                 <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
                 ✅ Correct: ${escapeHtml(r.correctAnswer)}<br>
                 💡 ${escapeHtml(r.explanation)}
@@ -1480,10 +1481,10 @@
     
     window.deleteSavedExam = (idx) => {
         if(confirm("Delete this saved exam?")) {
-            let savedExams = localStorage.getItem('gemini_saved_exams');
+            let savedExams = localStorage.getItem('jamb_saved_exams');
             savedExams = savedExams ? JSON.parse(savedExams) : [];
             savedExams.splice(idx, 1);
-            localStorage.setItem('gemini_saved_exams', JSON.stringify(savedExams));
+            localStorage.setItem('jamb_saved_exams', JSON.stringify(savedExams));
             loadSavedExams();
         }
     };
