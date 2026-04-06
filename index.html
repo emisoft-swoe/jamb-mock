@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JAMB AI ELITE | Gemini 2.5 Flash - Code Runner</title>
+    <title>JAMB AI ELITE | Gemini 2.5 Flash - Full Features</title>
     <style>
         :root {
             --bg: #0a0c10;
@@ -446,6 +446,22 @@
         .result-correct { border-left-color: var(--prim); }
         .result-wrong { border-left-color: var(--danger); }
         
+        /* Option Analysis Styling */
+        .option-analysis {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        .option-analysis.correct-highlight {
+            border-left: 3px solid var(--prim);
+            background: rgba(0,255,136,0.1);
+        }
+        .option-analysis.wrong-highlight {
+            border-left: 3px solid var(--danger);
+        }
+        
         .saved-exam-item {
             background: var(--card);
             border: 1px solid var(--border);
@@ -797,8 +813,10 @@
 
     // ============================================================
     // JAMB PREP APP - GOOGLE GEMINI 2.5 FLASH EDITION
-    // Features: Code blocks with working Copy & Run buttons
-    // HTML code extraction and execution in iframe
+    // Features: 
+    // - AI generates question + 4 options + analysis for EACH option in ONE call
+    // - Each option has its own explanation (why correct or wrong)
+    // - Saves API calls and respects rate limits
     // ============================================================
     
     let apiKey = localStorage.getItem('jamb_key_2026') || '';
@@ -881,7 +899,6 @@
     function formatMarkdown(text) {
         if(!text) return '';
         
-        // First, protect code blocks from other formatting
         let codeBlocks = [];
         let processed = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
             const index = codeBlocks.length;
@@ -889,7 +906,6 @@
             return `{{CODE_BLOCK_${index}}}`;
         });
         
-        // Apply inline formatting
         let formatted = processed
             .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -899,9 +915,7 @@
             .replace(/\n\d+\. (.*?)(?=\n|$)/g, '\n• $1')
             .replace(/\n/g, '<br>');
         
-        // Restore code blocks with copy and run buttons
         codeBlocks.forEach((block, idx) => {
-            const encodedCode = encodeURIComponent(block.code);
             const wrapper = document.createElement('div');
             wrapper.className = 'code-block-wrapper';
             wrapper.innerHTML = `
@@ -911,22 +925,17 @@
                 </div>
                 <pre><code class="language-${block.lang}">${escapeHtml(block.code)}</code></pre>
             `;
-            
             formatted = formatted.replace(`{{CODE_BLOCK_${idx}}}`, wrapper.outerHTML);
         });
         
         return formatted;
     }
     
-    // Function to attach event listeners to code blocks (called after DOM update)
     function attachCodeBlockListeners() {
-        // Copy buttons
         document.querySelectorAll('.copy-code-btn').forEach(btn => {
             btn.removeEventListener('click', handleCopyClick);
             btn.addEventListener('click', handleCopyClick);
         });
-        
-        // Run buttons
         document.querySelectorAll('.run-code-btn').forEach(btn => {
             btn.removeEventListener('click', handleRunClick);
             btn.addEventListener('click', handleRunClick);
@@ -941,9 +950,6 @@
                 const originalText = this.textContent;
                 this.textContent = '✓ Copied!';
                 setTimeout(() => { this.textContent = originalText; }, 2000);
-            }).catch(err => {
-                console.error('Copy failed:', err);
-                alert('Failed to copy code. Try selecting manually.');
             });
         }
     }
@@ -969,8 +975,6 @@
         editor.innerHTML = `<pre style="margin:0; white-space:pre-wrap; font-family:monospace;">${escapeHtml(code)}</pre>`;
         outputDiv.style.display = 'none';
         htmlPreviewContainer.style.display = 'none';
-        outputDiv.innerHTML = '';
-        htmlPreviewContainer.innerHTML = '';
         
         modal.classList.add('active');
     }
@@ -1010,15 +1014,10 @@
     }
     
     function runHTMLCode() {
-        const outputDiv = document.getElementById('code-runner-output');
         const htmlPreviewContainer = document.getElementById('html-preview-container');
-        
-        outputDiv.style.display = 'none';
         htmlPreviewContainer.style.display = 'block';
         
         let htmlCode = currentCodeToRun;
-        
-        // Extract HTML code if it's inside a code block or markdown
         if(htmlCode.includes('```html')) {
             const match = htmlCode.match(/```html\n([\s\S]*?)```/);
             if(match) htmlCode = match[1];
@@ -1079,7 +1078,6 @@
             container.appendChild(bubble);
         });
         
-        // Attach code block listeners after rendering
         setTimeout(() => attachCodeBlockListeners(), 50);
         container.scrollTop = container.scrollHeight;
     }
@@ -1208,14 +1206,6 @@
         const clone = bubble.cloneNode(true);
         const actions = clone.querySelector('.message-actions');
         if(actions) actions.remove();
-        const codeBlocks = clone.querySelectorAll('.code-block-wrapper');
-        codeBlocks.forEach(block => {
-            const pre = block.querySelector('pre');
-            if(pre) {
-                const code = pre.innerText;
-                block.innerHTML = code;
-            }
-        });
         const text = clone.innerText.trim();
         navigator.clipboard.writeText(text);
         const originalText = btn.innerText;
@@ -1321,8 +1311,6 @@
                 chat.updatedAt = new Date().toISOString();
                 saveChatHistories();
                 renderChatHistoryList();
-                
-                // Attach code block listeners to the new message
                 setTimeout(() => attachCodeBlockListeners(), 50);
             },
             (error) => {
@@ -1418,19 +1406,26 @@
         });
     }
     
+    // ============================================================
+    // IMPORTANT: ONE API CALL generates: Question + 4 Options + Analysis for EACH option
+    // This saves API calls and respects rate limits
+    // ============================================================
     async function generateQuestionsWithGemini(subject, count, examType, difficulty, topic = "") {
         const topicText = topic ? ` focusing on the topic: ${topic}` : '';
-        const prompt = `Generate exactly ${count} authentic ${examType} multiple-choice questions for ${subject} at ${difficulty} difficulty level${topicText}.
+        const prompt = `Generate exactly ${count} authentic ${examType} standard multiple-choice questions for ${subject} at ${difficulty} difficulty level${topicText}.
         
-        For EACH question, format EXACTLY like this (use "|||" as separator, one question per line):
-        [PASSAGE_IF_APPLICABLE] ||| Question text ||| Correct Answer ||| Wrong Option 1 ||| Wrong Option 2 ||| Wrong Option 3 ||| Brief explanation
+        For EACH question, provide ALL of the following in ONE response. Use "|||" as separator between fields:
+        
+        Format for each question (use "|||" as separator, one question per line):
+        [PASSAGE_IF_APPLICABLE] ||| Question text ||| Option A ||| Option B ||| Option C ||| Option D ||| Correct Answer (must match one of the options exactly) ||| Analysis for Option A (explain why it's correct or wrong) ||| Analysis for Option B ||| Analysis for Option C ||| Analysis for Option D
         
         IMPORTANT RULES:
-        1. For English Language and Literature subjects, create a relevant passage (3-5 sentences) for every 3-4 questions.
-        2. For subjects like Mathematics, Physics, Chemistry, leave the passage field empty.
-        3. Make questions realistic for JAMB/WAEC level.
+        1. For English Language and Literature subjects, create a relevant passage (3-5 sentences) for every 3-4 questions. Put passage in the first field.
+        2. For other subjects, leave the passage field empty.
+        3. Each option MUST have its own analysis explaining why that option is correct or incorrect.
+        4. Make questions and analyses realistic for JAMB/WAEC level.
         
-        Return ONLY the formatted questions, nothing else.`;
+        Return ONLY the formatted questions with analyses, nothing else.`;
         
         const raw = await callGeminiAPINonStream(prompt);
         return raw;
@@ -1529,6 +1524,7 @@
         }
     };
     
+    // Parse function now handles 4 option analyses
     function parseQuestions(raw, subject) {
         const lines = raw.split('\n').filter(l => l.includes('|||'));
         const questions = [];
@@ -1536,37 +1532,36 @@
         
         for(let i = 0; i < lines.length; i++) {
             const parts = lines[i].split('|||').map(p => p.trim());
+            
+            // Format: [passage] ||| question ||| optA ||| optB ||| optC ||| optD ||| correct ||| analysisA ||| analysisB ||| analysisC ||| analysisD
             let passage = "";
             let startIdx = 0;
-            if(parts.length >= 6 && parts[0].length > 60 && !parts[0].includes('?')) {
-                passage = parts[0];
-                startIdx = 1;
-            } else if (currentPassage && i % 4 === 0) {
-                passage = currentPassage;
-            } else if (parts.length >= 7) {
+            
+            // Check if first part is a passage (long text)
+            if(parts.length >= 11 && parts[0].length > 50 && !parts[0].includes('?')) {
                 passage = parts[0];
                 startIdx = 1;
             }
             
-            if(parts.length >= startIdx + 5) {
+            if(parts.length >= startIdx + 10) {
                 const questionText = parts[startIdx];
-                const correctAnswer = parts[startIdx + 1];
-                const wrongOptions = [parts[startIdx + 2], parts[startIdx + 3], parts[startIdx + 4]];
-                const explanation = parts.length > startIdx + 5 ? parts[startIdx + 5] : `The correct answer is "${correctAnswer}".`;
+                const options = [parts[startIdx + 1], parts[startIdx + 2], parts[startIdx + 3], parts[startIdx + 4]];
+                const correctAnswer = parts[startIdx + 5];
+                const optionAnalyses = [
+                    parts[startIdx + 6],
+                    parts[startIdx + 7],
+                    parts[startIdx + 8],
+                    parts[startIdx + 9]
+                ];
                 
-                const allOptions = [correctAnswer, ...wrongOptions];
-                for(let j = allOptions.length - 1; j > 0; j--) {
-                    const k = Math.floor(Math.random() * (j + 1));
-                    [allOptions[j], allOptions[k]] = [allOptions[k], allOptions[j]];
-                }
-                const correctIndex = allOptions.findIndex(opt => opt === correctAnswer);
+                const correctIndex = options.findIndex(opt => opt === correctAnswer);
                 
                 questions.push({
                     text: questionText,
                     correctAnswer: correctAnswer,
                     correctIndex: correctIndex,
-                    options: allOptions,
-                    explanation: explanation,
+                    options: options,
+                    optionAnalyses: optionAnalyses,
                     subject: subject,
                     passage: passage || null
                 });
@@ -1692,12 +1687,19 @@
             const isCorrect = selectedIndex === q.correctIndex;
             if(isCorrect) score++;
             
+            // Get the selected option text and its analysis
+            const selectedOptionText = selectedIndex !== null ? q.options[selectedIndex] : "Not answered";
+            const selectedAnalysis = selectedIndex !== null ? q.optionAnalyses[selectedIndex] : "No analysis available";
+            
             results.push({
                 number: i + 1,
                 question: q.text,
-                selectedAnswer: selectedIndex !== null ? q.options[selectedIndex] : "Not answered",
+                selectedAnswer: selectedOptionText,
+                selectedAnalysis: selectedAnalysis,
                 correctAnswer: q.correctAnswer,
-                explanation: q.explanation,
+                correctIndex: q.correctIndex,
+                options: q.options,
+                optionAnalyses: q.optionAnalyses,
                 isCorrect: isCorrect,
                 passage: q.passage
             });
@@ -1715,16 +1717,41 @@
         
         document.getElementById('results-score').innerHTML = `📊 Score: ${score}/${currentQuestions.length} (${percent}%)`;
         
-        const detailsHtml = results.map(r => `
-            <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
-                <strong>Q${r.number}</strong><br>
-                ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
-                ${formatMarkdown(escapeHtml(r.question))}<br>
-                <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
-                ✅ Correct: ${escapeHtml(r.correctAnswer)}<br>
-                💡 ${escapeHtml(r.explanation)}
-            </div>
-        `).join('');
+        // Generate detailed results HTML with option analyses
+        const detailsHtml = results.map(r => {
+            const optionsHtml = r.options.map((opt, idx) => {
+                const isSelected = r.selectedAnswer === opt;
+                const isCorrectOption = idx === r.correctIndex;
+                let analysisClass = "";
+                let analysisText = r.optionAnalyses[idx] || "No analysis available";
+                
+                if(isSelected && isCorrectOption) {
+                    analysisClass = "correct-highlight";
+                    analysisText = `✅ CORRECT - ${analysisText}`;
+                } else if(isSelected && !isCorrectOption) {
+                    analysisClass = "wrong-highlight";
+                    analysisText = `❌ YOUR ANSWER - ${analysisText}`;
+                } else if(isCorrectOption) {
+                    analysisClass = "correct-highlight";
+                    analysisText = `✓ CORRECT ANSWER - ${analysisText}`;
+                }
+                
+                return `
+                    <div class="option-analysis ${analysisClass}">
+                        <strong>${String.fromCharCode(65+idx)}. ${escapeHtml(opt)}</strong><br>
+                        <small>${formatMarkdown(escapeHtml(analysisText))}</small>
+                    </div>
+                `;
+            }).join('');
+            
+            return `
+                <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
+                    <strong>📌 Q${r.number}:</strong> ${formatMarkdown(escapeHtml(r.question))}<br><br>
+                    <strong>📝 Option Analysis:</strong>
+                    ${optionsHtml}
+                </div>
+            `;
+        }).join('');
         
         document.getElementById('results-details').innerHTML = detailsHtml;
         document.getElementById('results-modal').classList.add('active');
@@ -1786,16 +1813,40 @@
         
         document.getElementById('results-score').innerHTML = `📊 ${escapeHtml(exam.subject)}<br>${escapeHtml(exam.date)}<br>Score: ${exam.score}/${exam.total} (${exam.percent}%)`;
         
-        const detailsHtml = exam.results.map(r => `
-            <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
-                <strong>Q${r.number}</strong><br>
-                ${r.passage ? `<div class="passage-text" style="margin-bottom:8px;">📖 ${escapeHtml(r.passage)}</div>` : ''}
-                ${formatMarkdown(escapeHtml(r.question))}<br>
-                <span style="color: ${r.isCorrect ? '#00ff88' : '#ff4b2b'}">Your answer: ${escapeHtml(r.selectedAnswer)}</span><br>
-                ✅ Correct: ${escapeHtml(r.correctAnswer)}<br>
-                💡 ${escapeHtml(r.explanation)}
-            </div>
-        `).join('');
+        const detailsHtml = exam.results.map(r => {
+            const optionsHtml = r.options.map((opt, optIdx) => {
+                const isSelected = r.selectedAnswer === opt;
+                const isCorrectOption = optIdx === r.correctIndex;
+                let analysisClass = "";
+                let analysisText = r.optionAnalyses[optIdx] || "No analysis available";
+                
+                if(isSelected && isCorrectOption) {
+                    analysisClass = "correct-highlight";
+                    analysisText = `✅ CORRECT - ${analysisText}`;
+                } else if(isSelected && !isCorrectOption) {
+                    analysisClass = "wrong-highlight";
+                    analysisText = `❌ YOUR ANSWER - ${analysisText}`;
+                } else if(isCorrectOption) {
+                    analysisClass = "correct-highlight";
+                    analysisText = `✓ CORRECT ANSWER - ${analysisText}`;
+                }
+                
+                return `
+                    <div class="option-analysis ${analysisClass}">
+                        <strong>${String.fromCharCode(65+optIdx)}. ${escapeHtml(opt)}</strong><br>
+                        <small>${formatMarkdown(escapeHtml(analysisText))}</small>
+                    </div>
+                `;
+            }).join('');
+            
+            return `
+                <div class="result-card ${r.isCorrect ? 'result-correct' : 'result-wrong'}">
+                    <strong>📌 Q${r.number}:</strong> ${formatMarkdown(escapeHtml(r.question))}<br><br>
+                    <strong>📝 Option Analysis:</strong>
+                    ${optionsHtml}
+                </div>
+            `;
+        }).join('');
         
         document.getElementById('results-details').innerHTML = detailsHtml;
         document.getElementById('results-modal').classList.add('active');
