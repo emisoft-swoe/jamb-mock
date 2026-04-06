@@ -196,6 +196,12 @@
         .code-block-wrapper {
             position: relative;
             margin: 10px 0;
+            background: #1e1e1e;
+            border-radius: 8px;
+        }
+        .code-block-wrapper pre {
+            margin: 0;
+            padding: 40px 12px 12px 12px;
         }
         .code-actions {
             position: absolute;
@@ -206,7 +212,7 @@
             z-index: 10;
         }
         .code-action-btn {
-            background: rgba(0,0,0,0.7);
+            background: rgba(255,255,255,0.2);
             border: none;
             border-radius: 4px;
             padding: 4px 8px;
@@ -371,7 +377,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 1001;
             justify-content: center;
             align-items: center;
@@ -381,9 +387,9 @@
             background: var(--card);
             border-radius: 20px;
             padding: 20px;
-            width: 90%;
-            max-width: 800px;
-            max-height: 80vh;
+            width: 95%;
+            max-width: 1000px;
+            max-height: 90vh;
             overflow-y: auto;
         }
         .code-runner-output {
@@ -397,6 +403,14 @@
             word-break: break-word;
             max-height: 300px;
             overflow-y: auto;
+        }
+        .iframe-preview {
+            width: 100%;
+            height: 400px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: white;
+            margin-top: 15px;
         }
         .modal-calc-screen {
             background: var(--bg);
@@ -765,10 +779,12 @@
         <h3>💻 Code Runner</h3>
         <div id="code-runner-editor" style="background: var(--bg); padding: 15px; border-radius: 12px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto;"></div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="btn" id="run-code-btn" style="flex:1;">▶️ Run Code</button>
+            <button class="btn" id="run-code-btn" style="flex:1;">▶️ Run JavaScript</button>
+            <button class="btn" id="run-html-btn" style="flex:1;">🌐 Run HTML</button>
             <button class="btn btn-secondary" id="close-code-runner">Close</button>
         </div>
         <div id="code-runner-output" class="code-runner-output" style="display: none;"></div>
+        <div id="html-preview-container" style="display: none;"></div>
     </div>
 </div>
 
@@ -781,8 +797,8 @@
 
     // ============================================================
     // JAMB PREP APP - GOOGLE GEMINI 2.5 FLASH EDITION
-    // Features: Code blocks with Copy & Run buttons
-    // Confirm dialogs for ALL deletions
+    // Features: Code blocks with working Copy & Run buttons
+    // HTML code extraction and execution in iframe
     // ============================================================
     
     let apiKey = localStorage.getItem('jamb_key_2026') || '';
@@ -799,6 +815,7 @@
     let currentNumQuestions = 0;
     let currentDifficulty = "Intermediate";
     let currentCodeToRun = "";
+    let isHtmlCode = false;
     
     // Chat History Variables
     let chatHistories = [];
@@ -868,7 +885,7 @@
         let codeBlocks = [];
         let processed = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
             const index = codeBlocks.length;
-            codeBlocks.push({ lang, code: code.trim() });
+            codeBlocks.push({ lang: lang || 'text', code: code.trim() });
             return `{{CODE_BLOCK_${index}}}`;
         });
         
@@ -884,31 +901,16 @@
         
         // Restore code blocks with copy and run buttons
         codeBlocks.forEach((block, idx) => {
+            const encodedCode = encodeURIComponent(block.code);
             const wrapper = document.createElement('div');
             wrapper.className = 'code-block-wrapper';
             wrapper.innerHTML = `
                 <div class="code-actions">
-                    <button class="code-action-btn copy-code-btn" data-code="${escapeHtml(block.code)}">📋 Copy</button>
-                    <button class="code-action-btn run-code-btn" data-code="${escapeHtml(block.code)}">▶️ Run</button>
+                    <button class="code-action-btn copy-code-btn" data-code="${escapeHtml(block.code).replace(/"/g, '&quot;')}">📋 Copy</button>
+                    <button class="code-action-btn run-code-btn" data-code="${escapeHtml(block.code).replace(/"/g, '&quot;')}" data-lang="${block.lang}">▶️ Run</button>
                 </div>
                 <pre><code class="language-${block.lang}">${escapeHtml(block.code)}</code></pre>
             `;
-            
-            // Add event listeners after DOM insertion
-            setTimeout(() => {
-                const copyBtn = wrapper.querySelector('.copy-code-btn');
-                const runBtn = wrapper.querySelector('.run-code-btn');
-                if(copyBtn) {
-                    copyBtn.onclick = () => {
-                        navigator.clipboard.writeText(block.code);
-                        copyBtn.textContent = '✓ Copied!';
-                        setTimeout(() => copyBtn.textContent = '📋 Copy', 2000);
-                    };
-                }
-                if(runBtn) {
-                    runBtn.onclick = () => openCodeRunner(block.code);
-                }
-            }, 0);
             
             formatted = formatted.replace(`{{CODE_BLOCK_${idx}}}`, wrapper.outerHTML);
         });
@@ -916,34 +918,80 @@
         return formatted;
     }
     
-    function openCodeRunner(code) {
+    // Function to attach event listeners to code blocks (called after DOM update)
+    function attachCodeBlockListeners() {
+        // Copy buttons
+        document.querySelectorAll('.copy-code-btn').forEach(btn => {
+            btn.removeEventListener('click', handleCopyClick);
+            btn.addEventListener('click', handleCopyClick);
+        });
+        
+        // Run buttons
+        document.querySelectorAll('.run-code-btn').forEach(btn => {
+            btn.removeEventListener('click', handleRunClick);
+            btn.addEventListener('click', handleRunClick);
+        });
+    }
+    
+    function handleCopyClick(e) {
+        e.stopPropagation();
+        const code = this.getAttribute('data-code');
+        if(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = this.textContent;
+                this.textContent = '✓ Copied!';
+                setTimeout(() => { this.textContent = originalText; }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                alert('Failed to copy code. Try selecting manually.');
+            });
+        }
+    }
+    
+    function handleRunClick(e) {
+        e.stopPropagation();
+        const code = this.getAttribute('data-code');
+        const lang = this.getAttribute('data-lang');
+        if(code) {
+            openCodeRunner(code, lang);
+        }
+    }
+    
+    function openCodeRunner(code, language) {
         currentCodeToRun = code;
+        isHtmlCode = language === 'html' || code.toLowerCase().includes('<html') || code.toLowerCase().includes('<!DOCTYPE');
+        
         const modal = document.getElementById('code-runner-modal');
         const editor = document.getElementById('code-runner-editor');
         const outputDiv = document.getElementById('code-runner-output');
+        const htmlPreviewContainer = document.getElementById('html-preview-container');
         
         editor.innerHTML = `<pre style="margin:0; white-space:pre-wrap; font-family:monospace;">${escapeHtml(code)}</pre>`;
         outputDiv.style.display = 'none';
+        htmlPreviewContainer.style.display = 'none';
         outputDiv.innerHTML = '';
+        htmlPreviewContainer.innerHTML = '';
+        
         modal.classList.add('active');
     }
     
-    function runCode() {
+    function runJavaScriptCode() {
         const outputDiv = document.getElementById('code-runner-output');
         outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '⏳ Running code...<br>';
+        outputDiv.innerHTML = '⏳ Running JavaScript code...<br>';
         
         setTimeout(() => {
             try {
-                // Capture console.log output
                 let logs = [];
                 const originalLog = console.log;
                 console.log = (...args) => {
-                    logs.push(args.map(arg => String(arg)).join(' '));
+                    logs.push(args.map(arg => {
+                        if(typeof arg === 'object') return JSON.stringify(arg, null, 2);
+                        return String(arg);
+                    }).join(' '));
                     originalLog(...args);
                 };
                 
-                // Execute the code
                 const codeToRun = currentCodeToRun;
                 const asyncWrapper = new Function('console', codeToRun);
                 asyncWrapper(console);
@@ -961,7 +1009,45 @@
         }, 100);
     }
     
-    document.getElementById('run-code-btn')?.addEventListener('click', runCode);
+    function runHTMLCode() {
+        const outputDiv = document.getElementById('code-runner-output');
+        const htmlPreviewContainer = document.getElementById('html-preview-container');
+        
+        outputDiv.style.display = 'none';
+        htmlPreviewContainer.style.display = 'block';
+        
+        let htmlCode = currentCodeToRun;
+        
+        // Extract HTML code if it's inside a code block or markdown
+        if(htmlCode.includes('```html')) {
+            const match = htmlCode.match(/```html\n([\s\S]*?)```/);
+            if(match) htmlCode = match[1];
+        } else if(htmlCode.includes('```')) {
+            const match = htmlCode.match(/```\n([\s\S]*?)```/);
+            if(match) htmlCode = match[1];
+        }
+        
+        htmlPreviewContainer.innerHTML = `
+            <div style="margin-top: 15px;">
+                <strong>🌐 HTML Preview:</strong>
+                <iframe class="iframe-preview" srcdoc="${escapeHtml(htmlCode).replace(/"/g, '&quot;')}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"></iframe>
+            </div>
+        `;
+    }
+    
+    document.getElementById('run-code-btn')?.addEventListener('click', () => {
+        if(isHtmlCode) {
+            runHTMLCode();
+        } else {
+            runJavaScriptCode();
+        }
+    });
+    
+    document.getElementById('run-html-btn')?.addEventListener('click', () => {
+        isHtmlCode = true;
+        runHTMLCode();
+    });
+    
     document.getElementById('close-code-runner')?.addEventListener('click', () => {
         document.getElementById('code-runner-modal').classList.remove('active');
     });
@@ -992,6 +1078,9 @@
             const bubble = createMessageBubble(msg, idx);
             container.appendChild(bubble);
         });
+        
+        // Attach code block listeners after rendering
+        setTimeout(() => attachCodeBlockListeners(), 50);
         container.scrollTop = container.scrollHeight;
     }
 
@@ -1232,6 +1321,9 @@
                 chat.updatedAt = new Date().toISOString();
                 saveChatHistories();
                 renderChatHistoryList();
+                
+                // Attach code block listeners to the new message
+                setTimeout(() => attachCodeBlockListeners(), 50);
             },
             (error) => {
                 streamingBubble.innerHTML = `❌ Error: ${error}`;
