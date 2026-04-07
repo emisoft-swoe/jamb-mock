@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JAMB AI ELITE | Gemini 2.5 Flash - Full Features</title>
+    <title>JAMB AI ELITE | Gemini 2.5 Flash - FULLY FIXED</title>
     <style>
         :root {
             --bg: #0a0c10;
@@ -460,6 +460,7 @@
         }
         .option-analysis.wrong-highlight {
             border-left: 3px solid var(--danger);
+            background: rgba(255,75,43,0.1);
         }
         
         .saved-exam-item {
@@ -724,9 +725,9 @@
     <div id="settings" class="screen">
         <div class="glass-card">
             <h3>🔑 Google Gemini API Settings</h3>
-            <input type="password" id="api-key-input" placeholder="Paste Gemini API Key Here (starts with AIza...)" style="width:100%; margin-bottom:15px; background:var(--bg); color:var(--text); border:1px solid var(--border); padding:12px; border-radius:8px;">
+            <input type="password" id="api-key-input" placeholder="Paste Gemini API Key Here" style="width:100%; margin-bottom:15px; background:var(--bg); color:var(--text); border:1px solid var(--border); padding:12px; border-radius:8px;">
             <button class="btn" id="save-api-btn" onclick="window.saveKey()">💾 SAVE KEY</button>
-            <p style="font-size: 0.7rem; margin-top: 10px;">Get your free API key from <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--prim);">aistudio.google.com/apikey</a><br>Using model: <strong>gemini-2.5-flash</strong> (Free tier: 50-250 requests/day)</p>
+            <p style="font-size: 0.7rem; margin-top: 10px;">Using model: <strong>gemini-2.5-flash</strong> (Free tier: 50-250 requests/day)</p>
         </div>
         <div class="glass-card">
             <h3>🎨 Theme Settings</h3>
@@ -812,14 +813,9 @@
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
     // ============================================================
-    // JAMB PREP APP - GOOGLE GEMINI 2.5 FLASH EDITION
-    // Features: 
-    // - AI generates question + 4 options + analysis for EACH option in ONE call
-    // - Each option has its own explanation (why correct or wrong)
-    // - Saves API calls and respects rate limits
+    // YOUR API KEY - PRE-LOADED
     // ============================================================
-    
-    let apiKey = localStorage.getItem('jamb_key_2026') || '';
+    let apiKey = 'AIzaSyCscUU-V4Va44K9uHkPMpof67FcjDImx0w';
     const GEMINI_MODEL = "gemini-2.5-flash";
     let currentQuestions = [];
     let userAnswers = [];
@@ -1407,23 +1403,24 @@
     }
     
     // ============================================================
-    // IMPORTANT: ONE API CALL generates: Question + 4 Options + Analysis for EACH option
-    // This saves API calls and respects rate limits
+    // FIXED: AI generates Question + 4 Options + Analysis for EACH option
+    // Passage box ONLY appears when AI actually generates a passage
     // ============================================================
     async function generateQuestionsWithGemini(subject, count, examType, difficulty, topic = "") {
         const topicText = topic ? ` focusing on the topic: ${topic}` : '';
-        const prompt = `Generate exactly ${count} authentic ${examType} standard multiple-choice questions for ${subject} at ${difficulty} difficulty level${topicText}.
+        const prompt = `Generate exactly ${count} authentic ${examType} multiple-choice questions for ${subject} at ${difficulty} difficulty level${topicText}.
         
-        For EACH question, provide ALL of the following in ONE response. Use "|||" as separator between fields:
+        For EACH question, provide ALL of the following. Use "|||" as separator between each field. One question per line.
         
-        Format for each question (use "|||" as separator, one question per line):
-        [PASSAGE_IF_APPLICABLE] ||| Question text ||| Option A ||| Option B ||| Option C ||| Option D ||| Correct Answer (must match one of the options exactly) ||| Analysis for Option A (explain why it's correct or wrong) ||| Analysis for Option B ||| Analysis for Option C ||| Analysis for Option D
+        FORMAT (use "|||" as separator):
+        [OPTIONAL_PASSAGE_IF_NEEDED] ||| Question text ||| Option A ||| Option B ||| Option C ||| Option D ||| Correct Answer (exact text of the correct option) ||| Analysis for Option A (explain why it's correct or wrong) ||| Analysis for Option B ||| Analysis for Option C ||| Analysis for Option D
         
         IMPORTANT RULES:
-        1. For English Language and Literature subjects, create a relevant passage (3-5 sentences) for every 3-4 questions. Put passage in the first field.
-        2. For other subjects, leave the passage field empty.
-        3. Each option MUST have its own analysis explaining why that option is correct or incorrect.
-        4. Make questions and analyses realistic for JAMB/WAEC level.
+        1. For English Language comprehension passages: ONLY include a passage in the first field if the question requires reading a passage. For most English questions (grammar, vocabulary, etc.), leave the first field EMPTY.
+        2. For subjects like Mathematics, Physics, Chemistry, Biology, Government, Economics: ALWAYS leave the passage field EMPTY.
+        3. The "Correct Answer" field must contain the EXACT text of the correct option (not A/B/C/D letter).
+        4. Each option analysis must clearly state whether that option is CORRECT or WRONG and explain why.
+        5. Make questions and analyses realistic for JAMB/WAEC level.
         
         Return ONLY the formatted questions with analyses, nothing else.`;
         
@@ -1524,21 +1521,20 @@
         }
     };
     
-    // Parse function now handles 4 option analyses
+    // FIXED: Parse function now correctly separates question from options
     function parseQuestions(raw, subject) {
         const lines = raw.split('\n').filter(l => l.includes('|||'));
         const questions = [];
-        let currentPassage = "";
         
         for(let i = 0; i < lines.length; i++) {
             const parts = lines[i].split('|||').map(p => p.trim());
             
-            // Format: [passage] ||| question ||| optA ||| optB ||| optC ||| optD ||| correct ||| analysisA ||| analysisB ||| analysisC ||| analysisD
+            // Format: [passage (optional)] ||| question ||| optA ||| optB ||| optC ||| optD ||| correct ||| analysisA ||| analysisB ||| analysisC ||| analysisD
             let passage = "";
             let startIdx = 0;
             
-            // Check if first part is a passage (long text)
-            if(parts.length >= 11 && parts[0].length > 50 && !parts[0].includes('?')) {
+            // Check if first part is a passage (long text, not a question)
+            if(parts.length >= 11 && parts[0].length > 40 && !parts[0].includes('?') && !parts[0].includes('What') && !parts[0].includes('Which')) {
                 passage = parts[0];
                 startIdx = 1;
             }
@@ -1565,8 +1561,6 @@
                     subject: subject,
                     passage: passage || null
                 });
-                
-                if(passage) currentPassage = passage;
             }
         }
         return questions;
@@ -1687,15 +1681,13 @@
             const isCorrect = selectedIndex === q.correctIndex;
             if(isCorrect) score++;
             
-            // Get the selected option text and its analysis
             const selectedOptionText = selectedIndex !== null ? q.options[selectedIndex] : "Not answered";
-            const selectedAnalysis = selectedIndex !== null ? q.optionAnalyses[selectedIndex] : "No analysis available";
             
             results.push({
                 number: i + 1,
                 question: q.text,
                 selectedAnswer: selectedOptionText,
-                selectedAnalysis: selectedAnalysis,
+                selectedIndex: selectedIndex,
                 correctAnswer: q.correctAnswer,
                 correctIndex: q.correctIndex,
                 options: q.options,
@@ -1720,7 +1712,7 @@
         // Generate detailed results HTML with option analyses
         const detailsHtml = results.map(r => {
             const optionsHtml = r.options.map((opt, idx) => {
-                const isSelected = r.selectedAnswer === opt;
+                const isSelected = r.selectedIndex === idx;
                 const isCorrectOption = idx === r.correctIndex;
                 let analysisClass = "";
                 let analysisText = r.optionAnalyses[idx] || "No analysis available";
@@ -1815,7 +1807,7 @@
         
         const detailsHtml = exam.results.map(r => {
             const optionsHtml = r.options.map((opt, optIdx) => {
-                const isSelected = r.selectedAnswer === opt;
+                const isSelected = r.selectedIndex === optIdx;
                 const isCorrectOption = optIdx === r.correctIndex;
                 let analysisClass = "";
                 let analysisText = r.optionAnalyses[optIdx] || "No analysis available";
@@ -1883,7 +1875,10 @@
     });
     document.getElementById('modal-calc-clear')?.addEventListener('click', () => { modalCalcExpression = "0"; updateModalCalcScreen(); });
     
-    if(apiKey) document.getElementById('api-key-input').value = apiKey;
+    // Save API key to localStorage on load
+    localStorage.setItem('jamb_key_2026', apiKey);
+    document.getElementById('api-key-input').value = apiKey;
+    
     loadSavedExams();
     updateModalCalcScreen();
     setupDifficultyBars();
